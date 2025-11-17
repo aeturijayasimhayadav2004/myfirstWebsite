@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Our World · Home</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="logo">Our World</div>
+      <nav>
+        <a href="/index.html">Home</a>
+        <a href="/memories.html">Memories</a>
+        <a href="/blog.html">Blog</a>
+        <a href="/dates.html">Dates</a>
+        <a href="/special-days.html">Special Days</a>
+        <a href="/notes.html">Notes</a>
+        <a href="/fun-zone.html">Fun Zone</a>
+        <a href="/favorites.html">Weekly Picks</a>
+      </nav>
+    </header>
+    <main>
+      <section class="hero">
+        <div>
+          <p class="tag">Private & cozy</p>
+          <h1>Welcome to our shared universe</h1>
+          <p class="muted">
+            A safe corner built just for us. Collect memories, plan dream dates, and keep our stories glowing.
+          </p>
+          <div class="pill-row">
+            <button class="btn logout-btn" type="button">Logout</button>
+            <a class="btn ghost" href="/memories.html">Jump to memories</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 1.5rem">
+        <div class="grid-two">
+          <div>
+            <h2>Upcoming magic</h2>
+            <p class="muted">Add countdowns for cozy nights, adventures, and milestones.</p>
+            <ul class="timeline" id="eventsList"></ul>
+          </div>
+          <div>
+            <h3>Plan a moment</h3>
+            <form id="eventForm">
+              <label for="title">Title</label>
+              <input id="title" name="title" required />
+              <label for="event_date">Date</label>
+              <input id="event_date" name="event_date" type="date" required />
+              <label for="description">Details</label>
+              <textarea id="description" name="description" rows="3"></textarea>
+              <button class="btn" type="submit">Save</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <p class="footer">Built with love · Sessions last a week · Default password is "starlight"</p>
+    </main>
+    <script src="/js/app.js"></script>
+  </body>
+</html>

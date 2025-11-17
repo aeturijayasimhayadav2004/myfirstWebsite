@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: our-world
+    env: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+      - key: OURWORLD_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        sync: false

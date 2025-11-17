@@ -1,1 +1,42 @@
-# myfirstWebsite
+# Our World
+
+Private couple's web app with a zero-dependency Node backend, file-based persistence, PBKDF2-protected login, and a dark purple multi-page UI.
+
+## Setup
+
+No external npm packages are required, so installs succeed even in locked-down environments:
+
+```bash
+npm install  # installs nothing but records the lockfile
+npm start
+```
+
+An empty `requirements.txt` is included to satisfy platforms that automatically run `pip install -r requirements.txt` during deploys; no Python dependencies are needed.
+
+The server defaults to port **3000**. Sessions are HTTP-only cookies that last one week with `sameSite=lax` and are validated entirely in-process.
+
+### Environment variables
+
+- `OURWORLD_PASSWORD` – shared password (defaults to `starlight`)
+- `PORT` – optional port override
+- `OURWORLD_PASSWORD` remains the shared secret (PBKDF2-hashed at runtime)
+
+## Features
+
+- **Authentication**: `/api/session/login` uses PBKDF2-hashed passwords; `/api/session/logout` clears the session and cookie.
+- **Health checks**: `/api/health` confirms storage availability.
+- **Protected content**: All app pages (except `/login.html`) require an active session; missing or expired sessions redirect to the login page.
+- **Home**: Add and view upcoming events via `/api/home/events`.
+- **Memories**: Authenticated photo uploads stored in `/uploads` with metadata in the local data store.
+- **Blog**: Create and read posts through `/api/blog`.
+- **Dates**: Manage date ideas and bucket-list items at `/api/dates`, `/api/dates/ideas`, and `/api/dates/bucket`.
+- **Special Days**: Store milestones and countdowns through `/api/special-days`.
+- **Notes**: Authenticated love notes with newest-first ordering via `/api/notes`.
+- **Fun Zone**: Wheel ideas, quiz Q&A, and polls with voting at `/api/fun` and `/api/fun/polls/:id/vote`.
+- **Weekly Picks**: Capture weekly favorite songs/movies (with optional uploads) via `/api/favorites`.
+
+## Deploying on Render
+
+Use the included `render.yaml` so Render provisions a **Node** web service that runs `npm install` and starts the app with `node server.js`. A `.nvmrc` is checked in to pin Node **18** for consistent PBKDF2 behavior across deploys. Render health checks call `/api/health` (already configured in the manifest).
+
+If you previously created the service as Python (because `requirements.txt` exists for compatibility), update the Render dashboard start command to `node server.js`—or keep it as `python server.py`, which delegates to the Node entrypoint. Set `OURWORLD_PASSWORD` (and optionally `SESSION_SECRET`) in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.
