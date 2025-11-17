@@ -17,22 +17,21 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 
 ### Environment variables
 
-- `OURWORLD_PASSWORD` – shared password (defaults to `starlight`)
+- `OURWORLD_PASSWORD` – required shared password (set it in the environment so it never appears in client code)
 - `PORT` – optional port override
-- `OURWORLD_PASSWORD` remains the shared secret (PBKDF2-hashed at runtime)
 
 ## Features
 
 - **Authentication**: `/api/session/login` uses PBKDF2-hashed passwords; `/api/session/logout` clears the session and cookie.
 - **Health checks**: `/api/health` confirms storage availability.
-- **Protected content**: All app pages (except `/login.html`) require an active session; missing or expired sessions redirect to the login page, and every data API (events, memories, blog, dates, special days, notes, favorites) enforces authentication.
+- **Protected content**: All app pages (except `/login.html`) require an active session; missing or expired sessions redirect to the login page, and every data API (events, memories, blog, dates, special days, favorites) enforces authentication.
 - **Home**: Add and view upcoming events via `/api/home/events` (auth required).
-- **Memories**: Authenticated photo uploads stored in `/uploads` with metadata in the local data store.
+- **Memories**: Authenticated photo uploads with captions stored in `/uploads` with metadata in the local data store.
 - **Blog**: Create and read posts through `/api/blog` (auth required).
 - **Dates**: Manage date ideas and bucket-list items at `/api/dates`, `/api/dates/ideas`, and `/api/dates/bucket` (auth required).
-- **Special Days**: Store milestones and countdowns through `/api/special-days` (auth required).
-- **Notes**: Authenticated love notes with newest-first ordering via `/api/notes`.
+- **Special Days**: Store milestones and countdowns through `/api/special-days` with achieved items separated once the date passes (auth required).
 - **Weekly Picks**: Capture weekly favorite songs/movies via `/api/favorites` (auth required).
+- **Mr. Bablu**: A sunflower-themed page that surfaces a new love quote on each visit.
 
 ## Deploying on Render
 

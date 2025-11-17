@@ -30,7 +30,6 @@ function loadData() {
       dateIdeas: [],
       bucketItems: [],
       specialDays: [],
-      notes: [],
       favorites: [],
       profile: {
         name: 'Us',
@@ -68,7 +67,6 @@ function loadData() {
         dateIdeas: 1,
         bucketItems: 1,
         specialDays: 1,
-        notes: 1,
         favorites: 1
       }
     };
@@ -77,7 +75,7 @@ function loadData() {
   const raw = fs.readFileSync(DATA_FILE, 'utf8');
   const parsed = JSON.parse(raw);
 
-  // Normalize legacy records created before structured fun/poll data
+  // Normalize legacy records
   if (Array.isArray(parsed.fun?.wheel)) {
     parsed.fun.wheel = parsed.fun.wheel.map((entry) =>
       typeof entry === 'string' ? { idea: entry } : { idea: entry.idea || entry.text || 'Fun idea' }
@@ -96,6 +94,9 @@ function loadData() {
     }));
   }
 
+  parsed.memories = Array.isArray(parsed.memories)
+    ? parsed.memories.map((m) => ({ ...m, caption: m.caption || '' }))
+    : [];
   parsed.favorites = Array.isArray(parsed.favorites) ? parsed.favorites : [];
   parsed.profile = parsed.profile || { name: 'Us', bio: 'Together, always.', avatar: null };
   parsed.nextIds = parsed.nextIds || {};
@@ -381,7 +382,12 @@ async function handleApi(req, res, session, pathname) {
         return;
       }
       const id = data.nextIds.memories++;
-      const record = { id, ...stored, uploaded_at: new Date().toISOString() };
+      const record = {
+        id,
+        ...stored,
+        caption: (payload.caption || '').toString().slice(0, 240),
+        uploaded_at: new Date().toISOString()
+      };
       data.memories.push(record);
       saveData(data);
       sendJson(res, 200, record);
@@ -593,38 +599,6 @@ async function handleApi(req, res, session, pathname) {
     return;
   }
 
-  if (pathname === '/api/notes') {
-    if (req.method === 'GET') {
-      if (!requireAuth(session, res)) return;
-      sendJson(res, 200, data.notes.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
-      return;
-    }
-    if (req.method === 'POST') {
-      if (!requireAuth(session, res)) return;
-      const payload = JSON.parse(await readBody(req) || '{}');
-      const id = data.nextIds.notes++;
-      const record = { id, author: payload.author || 'Us', body: payload.body || '', created_at: new Date().toISOString() };
-      data.notes.push(record);
-      saveData(data);
-      sendJson(res, 200, record);
-      return;
-    }
-  }
-
-  if (pathname.startsWith('/api/notes/') && req.method === 'DELETE') {
-    if (!requireAuth(session, res)) return;
-    const id = Number(pathname.split('/').pop());
-    const idx = data.notes.findIndex((n) => n.id === id);
-    if (idx === -1) {
-      sendJson(res, 404, { error: 'Not found' });
-      return;
-    }
-    data.notes.splice(idx, 1);
-    saveData(data);
-    sendJson(res, 200, { success: true });
-    return;
-  }
-
   if (pathname === '/api/favorites') {
     if (req.method === 'GET') {
       if (!requireAuth(session, res)) return;
@@ -675,34 +649,6 @@ async function handleApi(req, res, session, pathname) {
     return;
   }
 
-  if (pathname === '/api/fun') {
-    if (req.method === 'GET') {
-      if (!requireAuth(session, res)) return;
-      sendJson(res, 200, data.fun);
-      return;
-    }
-  }
-
-  if (pathname.startsWith('/api/fun/polls/') && req.method === 'POST') {
-    const parts = pathname.split('/').filter(Boolean);
-    const id = Number(parts[3]);
-    const poll = data.fun.polls.find((p) => p.id === id);
-    if (!poll) {
-      sendJson(res, 404, { error: 'Poll not found' });
-      return;
-    }
-    const payload = JSON.parse(await readBody(req) || '{}');
-    const option = poll.options.find((o) => o.id === Number(payload.optionId));
-    if (!option) {
-      sendJson(res, 400, { error: 'Invalid option' });
-      return;
-    }
-    option.votes += 1;
-    saveData(data);
-    sendJson(res, 200, poll);
-    return;
-  }
-
   sendText(res, 404, 'Not found');
 }
 
@@ -712,9 +658,9 @@ const protectedPages = new Set([
   '/blog.html',
   '/dates.html',
   '/special-days.html',
-  '/notes.html',
   '/favorites.html',
-  '/profile.html'
+  '/profile.html',
+  '/bablu.html'
 ]);
 
 const server = http.createServer(async (req, res) => {

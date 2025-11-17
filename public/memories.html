@@ -15,8 +15,8 @@
         <a href="/blog.html">Blog</a>
         <a href="/dates.html">Dates</a>
         <a href="/special-days.html">Special Days</a>
-        <a href="/notes.html">Notes</a>
         <a href="/favorites.html">Weekly Picks</a>
+        <a href="/bablu.html">Mr. Bablu</a>
       </nav>
       <button class="profile-chip" type="button" onclick="window.location.href='/profile.html'">
         <span class="profile-avatar" aria-hidden="true"></span>
@@ -35,6 +35,8 @@
           <form id="memoryForm">
             <label for="photo">Choose photo</label>
             <input id="photo" name="photo" type="file" accept="image/*" required />
+            <label for="caption">Caption</label>
+            <input id="caption" name="caption" maxlength="240" placeholder="Add a sweet note" />
             <button class="btn" type="submit">Upload</button>
           </form>
         </div>

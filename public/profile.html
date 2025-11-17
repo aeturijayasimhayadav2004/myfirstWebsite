@@ -15,8 +15,8 @@
         <a href="/blog.html">Blog</a>
         <a href="/dates.html">Dates</a>
         <a href="/special-days.html">Special Days</a>
-        <a href="/notes.html">Notes</a>
         <a href="/favorites.html">Weekly Picks</a>
+        <a href="/bablu.html">Mr. Bablu</a>
       </nav>
       <button class="profile-chip active" type="button">
         <span class="profile-avatar" aria-hidden="true"></span>
@@ -31,8 +31,10 @@
             <p class="tag">Private space</p>
             <h1 data-profile-name>Us</h1>
             <p class="muted" id="profileBio">Together, always.</p>
-            <div class="pill-row">
-              <button class="btn" id="profileLogout" type="button">Logout</button>
+            <div class="profile-meta">
+              <span>Secure &amp; private</span>
+              <span>Session: 1 week</span>
+              <span>Uploads stay local</span>
             </div>
           </div>
         </div>
@@ -45,8 +47,13 @@
             <textarea id="bio" name="bio" rows="3" placeholder="Sweet description"></textarea>
             <label for="avatar">Profile photo</label>
             <input id="avatar" name="avatar" type="file" accept="image/*" />
-            <button class="btn" type="submit">Save profile</button>
+            <div class="profile-actions">
+              <button class="btn" type="submit">Save profile</button>
+            </div>
           </form>
+          <div class="profile-actions">
+            <button class="btn ghost" id="profileLogout" type="button">Logout</button>
+          </div>
         </div>
       </section>
     </main>

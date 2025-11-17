@@ -167,7 +167,7 @@ main {
 }
 
 .spacer {
-  height: 0.5rem;
+  height: 0.9rem;
 }
 
 .favorite-row {
@@ -175,6 +175,10 @@ main {
   justify-content: space-between;
   gap: 0.75rem;
   align-items: flex-start;
+}
+
+.caption {
+  margin: 0.35rem 0 0.25rem;
 }
 
 .card {
@@ -239,6 +243,15 @@ select {
 label {
   font-weight: 600;
   color: var(--muted);
+}
+
+form {
+  display: grid;
+  gap: 0.6rem;
+}
+
+form .btn {
+  width: 100%;
 }
 
 .list {
@@ -336,4 +349,143 @@ label {
   .profile-chip {
     margin-top: 0.75rem;
   }
+}
+
+/* Bucket list styling */
+.bucket-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bucket-row .checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.bucket-row.done span {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Sunflower page */
+.sunflower-body {
+  background: radial-gradient(circle at 20% 20%, rgba(255, 199, 66, 0.12), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgba(255, 226, 120, 0.2), transparent 40%),
+    linear-gradient(135deg, #1c0f2b, #12091f 50%, #1d0f2b);
+}
+
+.sunflower-card {
+  background: linear-gradient(120deg, rgba(255, 224, 138, 0.08), rgba(255, 196, 82, 0.08));
+  border: 1px solid rgba(255, 224, 138, 0.2);
+}
+
+.quote-box {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1rem;
+  border-radius: 14px;
+  margin-top: 0.75rem;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.bouquet {
+  position: relative;
+  width: 160px;
+  height: 200px;
+  margin-left: auto;
+}
+
+.bouquet .stem {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 8px;
+  height: 120px;
+  background: linear-gradient(#2bce89, #198b5b);
+  transform: translateX(-50%);
+  border-radius: 10px;
+}
+
+.bouquet .bloom {
+  position: absolute;
+  font-size: 48px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
+  animation: sway 4s ease-in-out infinite;
+}
+
+.bouquet .bloom-alt {
+  top: 22px;
+  left: 10px;
+  animation-delay: 0.5s;
+}
+
+.bouquet .bloom-small {
+  top: 12px;
+  right: 0;
+  font-size: 42px;
+  animation-delay: 1s;
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+/* Profile layout tweaks */
+.profile-hero {
+  align-items: stretch;
+}
+
+.profile-card {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 18px;
+  padding: 1rem;
+}
+
+.profile-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.profile-meta span {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.45rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.profile-actions .btn {
+  width: 100%;
+}
+
+/* Responsive tweaks */
+.navbar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.profile-chip {
+  min-width: 120px;
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }

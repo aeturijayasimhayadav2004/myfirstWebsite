@@ -158,9 +158,10 @@ async function loadMemories() {
     const memories = await apiRequest('/api/memories');
     container.innerHTML = memories
       .map(
-        (m) => `<div><img src="/uploads/${m.filename}" alt="${m.originalname}"><div class="muted">${
-          new Date(m.uploaded_at).toLocaleString()
-        }</div><button class="btn delete-memory" data-id="${m.id}">Delete</button></div>`
+        (m) =>
+          `<div><img src="/uploads/${m.filename}" alt="${m.originalname}"><p class="muted caption">${
+            m.caption || ''
+          }</p><div class="muted">${new Date(m.uploaded_at).toLocaleString()}</div><button class="btn delete-memory" data-id="${m.id}">Delete</button></div>`
       )
       .join('');
     document.querySelectorAll('.delete-memory').forEach((btn) => {
@@ -180,6 +181,7 @@ function bindMemoryForm() {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fileInput = form.querySelector('input[type="file"]');
+    const captionInput = form.querySelector('input[name="caption"]');
     const file = fileInput?.files?.[0];
     if (!file) {
       alert('Please choose a file first.');
@@ -192,6 +194,7 @@ function bindMemoryForm() {
           type: file.type,
           data: await fileToBase64(file),
         },
+        caption: captionInput?.value || '',
       };
       await apiRequest('/api/memories', {
         method: 'POST',
@@ -286,9 +289,10 @@ async function loadDates() {
     if (bucketContainer) {
       bucketContainer.innerHTML = bucket
         .map(
-          (item) => `<li><label><input type="checkbox" data-id="${item.id}" ${
-            item.completed ? 'checked' : ''
-          } /> ${item.title}</label> <button class="btn delete-bucket" data-id="${item.id}">Delete</button></li>`
+          (item) =>
+            `<li class="bucket-row ${item.completed ? 'done' : ''}"><label class="checkbox">` +
+            `<input type="checkbox" data-id="${item.id}" ${item.completed ? 'checked' : ''} />` +
+            `<span>${item.title}</span></label><button class="btn delete-bucket" data-id="${item.id}">Delete</button></li>`
         )
         .join('');
       bucketContainer.querySelectorAll('input[type="checkbox"]').forEach((box) => {
@@ -350,11 +354,23 @@ function bindDateForms() {
 
 async function loadSpecialDays() {
   const list = document.getElementById('specialDays');
+  const achievedList = document.getElementById('achievedDays');
   if (!list) return;
+  if (window.specialDayTimers) {
+    window.specialDayTimers.forEach((t) => clearInterval(t));
+  }
   const timers = [];
   try {
     const days = await apiRequest('/api/special-days');
-    list.innerHTML = days
+    const now = Date.now();
+    const upcoming = days
+      .filter((d) => new Date(d.event_date).getTime() >= now)
+      .sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
+    const achieved = days
+      .filter((d) => new Date(d.event_date).getTime() < now)
+      .sort((a, b) => new Date(b.event_date) - new Date(a.event_date));
+
+    list.innerHTML = upcoming
       .map(
         (d) =>
           `<li data-date="${d.event_date}" data-id="${d.id}"><strong>${d.title}</strong><div class="muted countdown">Loading timer...</div><p>${
@@ -362,6 +378,18 @@ async function loadSpecialDays() {
           }</p><button class="btn delete-special" data-id="${d.id}">Delete</button></li>`
       )
       .join('');
+
+    if (achievedList) {
+      achievedList.innerHTML = achieved
+        .map(
+          (d) =>
+            `<li><strong>${d.title}</strong><div class="muted">Achieved on ${new Date(d.event_date).toDateString()}</div><p>${
+              d.description || ''
+            }</p><button class="btn delete-special" data-id="${d.id}">Delete</button></li>`
+        )
+        .join('');
+    }
+
     list.querySelectorAll('li').forEach((item) => {
       const target = new Date(item.dataset.date).getTime();
       const countdown = item.querySelector('.countdown');
@@ -371,15 +399,12 @@ async function loadSpecialDays() {
           countdown.textContent = 'Invalid date';
           return;
         }
-        const past = diff < 0;
         const abs = Math.abs(diff);
         const days = Math.floor(abs / (1000 * 60 * 60 * 24));
         const hours = Math.floor((abs / (1000 * 60 * 60)) % 24);
         const minutes = Math.floor((abs / (1000 * 60)) % 60);
         const seconds = Math.floor((abs / 1000) % 60);
-        countdown.textContent = past
-          ? `Already celebrated ${days}d ${hours}h ${minutes}m ${seconds}s ago`
-          : `${days}d ${hours}h ${minutes}m ${seconds}s away`;
+        countdown.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s away`;
       };
       tick();
       timers.push(setInterval(tick, 1000));
@@ -390,8 +415,16 @@ async function loadSpecialDays() {
         loadSpecialDays();
       });
     });
+    achievedList?.querySelectorAll('.delete-special').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiRequest(`/api/special-days/${btn.dataset.id}`, { method: 'DELETE' });
+        loadSpecialDays();
+      });
+    });
+    window.specialDayTimers = timers;
   } catch (err) {
     list.innerHTML = '<li class="muted">Unable to load dates</li>';
+    if (achievedList) achievedList.innerHTML = '';
   }
 }
 
@@ -413,29 +446,6 @@ function bindSpecialDaysForm() {
       alert('Login to add milestones.');
     }
   });
-}
-
-async function loadNotes() {
-  const list = document.getElementById('notesList');
-  if (!list) return;
-  try {
-    const notes = await apiRequest('/api/notes');
-    list.innerHTML = notes
-      .map(
-        (n) => `<li><div class="muted">${n.author} · ${new Date(n.created_at).toLocaleString()}</div><p>${
-          n.body
-        }</p><button class="btn delete-note" data-id="${n.id}">Delete</button></li>`
-      )
-      .join('');
-    list.querySelectorAll('.delete-note').forEach((btn) => {
-      btn.addEventListener('click', async () => {
-        await apiRequest(`/api/notes/${btn.dataset.id}`, { method: 'DELETE' });
-        loadNotes();
-      });
-    });
-  } catch (err) {
-    list.innerHTML = '<li class="muted">Login to see notes.</li>';
-  }
 }
 
 async function loadFavorites() {
@@ -483,26 +493,6 @@ function bindFavoritesForm() {
   });
 }
 
-function bindNotesForm() {
-  const form = document.getElementById('noteForm');
-  if (!form) return;
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(form));
-    try {
-      await apiRequest('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      form.reset();
-      loadNotes();
-    } catch (err) {
-      alert('Login to add notes.');
-    }
-  });
-}
-
 function bindProfileForm() {
   const form = document.getElementById('profileForm');
   if (!form) return;
@@ -527,6 +517,21 @@ function bindProfileForm() {
   });
 }
 
+function loadBabluPage() {
+  const quoteBox = document.getElementById('babluQuote');
+  if (!quoteBox) return;
+  const quotes = [
+    'With you, every sunrise feels brand new.',
+    'You are my quiet place in a loud world.',
+    'Our love is my favorite adventure.',
+    'You turn ordinary moments into forever memories.',
+    'Your smile is my daily dose of sunshine.',
+    'I fall for you a little more each day.',
+  ];
+  const pick = quotes[Math.floor(Math.random() * quotes.length)];
+  quoteBox.textContent = pick;
+}
+
 function init() {
   requireSession(window.location.pathname);
   loadProfile(window.location.pathname === '/login.html');
@@ -537,7 +542,6 @@ function init() {
   bindBlogForm();
   bindDateForms();
   bindSpecialDaysForm();
-  bindNotesForm();
   bindFavoritesForm();
   bindProfileForm();
   loadEvents();
@@ -545,8 +549,8 @@ function init() {
   loadBlog();
   loadDates();
   loadSpecialDays();
-  loadNotes();
   loadFavorites();
+  loadBabluPage();
 }
 
 document.addEventListener('DOMContentLoaded', init);
