@@ -25,7 +25,7 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 
 - **Authentication**: `/api/session/login` uses PBKDF2-hashed passwords; `/api/session/logout` clears the session and cookie.
 - **Health checks**: `/api/health` confirms storage availability.
-- **Protected content**: Memories, blog posts, date planners, special days, notes, and Fun Zone voting require an active session. Protected pages redirect to `index.html` when the session is missing.
+- **Protected content**: All app pages (except `/login.html`) require an active session; missing or expired sessions redirect to the login page.
 - **Home**: Add and view upcoming events via `/api/home/events`.
 - **Memories**: Authenticated photo uploads stored in `/uploads` with metadata in the local data store.
 - **Blog**: Create and read posts through `/api/blog`.
@@ -33,7 +33,10 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 - **Special Days**: Store milestones and countdowns through `/api/special-days`.
 - **Notes**: Authenticated love notes with newest-first ordering via `/api/notes`.
 - **Fun Zone**: Wheel ideas, quiz Q&A, and polls with voting at `/api/fun` and `/api/fun/polls/:id/vote`.
+- **Weekly Picks**: Capture weekly favorite songs/movies (with optional uploads) via `/api/favorites`.
 
 ## Deploying on Render
 
-Use the included `render.yaml` so Render provisions a **Node** web service that runs `npm install` and starts the app with `node server.js`. If you previously created the service as Python (because `requirements.txt` exists for compatibility), update the Render dashboard start command to `node server.js`—or keep it as `python server.py`, which now delegates to the Node entrypoint. Set `OURWORLD_PASSWORD` (and optionally `SESSION_SECRET`) in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.
+Use the included `render.yaml` so Render provisions a **Node** web service that runs `npm install` and starts the app with `node server.js`. A `.nvmrc` is checked in to pin Node **18** for consistent PBKDF2 behavior across deploys. Render health checks call `/api/health` (already configured in the manifest).
+
+If you previously created the service as Python (because `requirements.txt` exists for compatibility), update the Render dashboard start command to `node server.js`—or keep it as `python server.py`, which delegates to the Node entrypoint. Set `OURWORLD_PASSWORD` (and optionally `SESSION_SECRET`) in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.

@@ -30,6 +30,7 @@ function loadData() {
       bucketItems: [],
       specialDays: [],
       notes: [],
+      favorites: [],
       fun: {
         wheel: [
           { idea: 'Surprise takeaway night' },
@@ -61,7 +62,8 @@ function loadData() {
         dateIdeas: 1,
         bucketItems: 1,
         specialDays: 1,
-        notes: 1
+        notes: 1,
+        favorites: 1
       }
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(seeded, null, 2));
@@ -87,6 +89,10 @@ function loadData() {
         : []
     }));
   }
+
+  parsed.favorites = Array.isArray(parsed.favorites) ? parsed.favorites : [];
+  parsed.nextIds = parsed.nextIds || {};
+  parsed.nextIds.favorites = parsed.nextIds.favorites || 1;
 
   return parsed;
 }
@@ -174,6 +180,14 @@ function sanitizeFilename(name) {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
+function storeUpload(file) {
+  if (!file?.data || !file.name || !file.type) return null;
+  const buffer = Buffer.from(file.data, 'base64');
+  const filename = `${Date.now()}-${Math.random().toString(16).slice(2)}-${sanitizeFilename(file.name)}`;
+  fs.writeFileSync(path.join(UPLOAD_DIR, filename), buffer);
+  return { filename, originalname: file.name, mime: file.type };
+}
+
 function serveStatic(req, res, filepath) {
   fs.readFile(filepath, (err, data) => {
     if (err) {
@@ -199,7 +213,7 @@ function serveStatic(req, res, filepath) {
 
 function handleUploads(req, res, session, pathname) {
   if (!session) {
-    sendText(res, 302, 'Redirect', { Location: '/index.html' });
+    sendText(res, 302, 'Redirect', { Location: '/login.html' });
     return;
   }
   const target = path.join(UPLOAD_DIR, pathname.replace('/uploads/', ''));
@@ -276,6 +290,20 @@ async function handleApi(req, res, session, pathname) {
     }
   }
 
+  if (pathname.startsWith('/api/home/events/') && req.method === 'DELETE') {
+    if (!requireAuth(session, res)) return;
+    const id = Number(pathname.split('/').pop());
+    const idx = data.events.findIndex((e) => e.id === id);
+    if (idx === -1) {
+      sendJson(res, 404, { error: 'Not found' });
+      return;
+    }
+    data.events.splice(idx, 1);
+    saveData(data);
+    sendJson(res, 200, { success: true });
+    return;
+  }
+
   if (pathname === '/api/memories') {
     if (req.method === 'GET') {
       if (!requireAuth(session, res)) return;
@@ -286,15 +314,17 @@ async function handleApi(req, res, session, pathname) {
       if (!requireAuth(session, res)) return;
       const body = await readBody(req);
       const payload = JSON.parse(body || '{}');
-      if (!payload?.file?.data || !payload.file.name || !payload.file.type?.startsWith('image/')) {
+      if (!payload?.file?.type?.startsWith('image/')) {
         sendJson(res, 400, { error: 'Invalid upload' });
         return;
       }
-      const buffer = Buffer.from(payload.file.data, 'base64');
-      const filename = `${Date.now()}-${Math.random().toString(16).slice(2)}-${sanitizeFilename(payload.file.name)}`;
-      fs.writeFileSync(path.join(UPLOAD_DIR, filename), buffer);
+      const stored = storeUpload(payload.file);
+      if (!stored) {
+        sendJson(res, 400, { error: 'Invalid upload' });
+        return;
+      }
       const id = data.nextIds.memories++;
-      const record = { id, filename, originalname: payload.file.name, uploaded_at: new Date().toISOString() };
+      const record = { id, ...stored, uploaded_at: new Date().toISOString() };
       data.memories.push(record);
       saveData(data);
       sendJson(res, 200, record);
@@ -341,6 +371,20 @@ async function handleApi(req, res, session, pathname) {
     }
   }
 
+  if (pathname.startsWith('/api/blog/') && req.method === 'DELETE') {
+    if (!requireAuth(session, res)) return;
+    const id = Number(pathname.split('/').pop());
+    const idx = data.blogPosts.findIndex((p) => p.id === id);
+    if (idx === -1) {
+      sendJson(res, 404, { error: 'Not found' });
+      return;
+    }
+    data.blogPosts.splice(idx, 1);
+    saveData(data);
+    sendJson(res, 200, { success: true });
+    return;
+  }
+
   if (pathname === '/api/dates/ideas') {
     if (req.method === 'GET') {
       sendJson(res, 200, data.dateIdeas);
@@ -362,6 +406,20 @@ async function handleApi(req, res, session, pathname) {
       sendJson(res, 200, record);
       return;
     }
+  }
+
+  if (pathname.startsWith('/api/dates/ideas/') && req.method === 'DELETE') {
+    if (!requireAuth(session, res)) return;
+    const id = Number(pathname.split('/').pop());
+    const idx = data.dateIdeas.findIndex((i) => i.id === id);
+    if (idx === -1) {
+      sendJson(res, 404, { error: 'Not found' });
+      return;
+    }
+    data.dateIdeas.splice(idx, 1);
+    saveData(data);
+    sendJson(res, 200, { success: true });
+    return;
   }
 
   if (pathname.startsWith('/api/dates/ideas/') && req.method === 'PATCH') {
@@ -424,6 +482,22 @@ async function handleApi(req, res, session, pathname) {
       sendJson(res, 200, item);
       return;
     }
+    if (req.method === 'DELETE') {
+      if (!requireAuth(session, res)) return;
+      if (!Number.isFinite(targetId)) {
+        sendJson(res, 400, { error: 'Invalid id' });
+        return;
+      }
+      const idx = data.bucketItems.findIndex((i) => i.id === targetId);
+      if (idx === -1) {
+        sendJson(res, 404, { error: 'Not found' });
+        return;
+      }
+      data.bucketItems.splice(idx, 1);
+      saveData(data);
+      sendJson(res, 200, { success: true });
+      return;
+    }
   }
 
   if (pathname === '/api/special-days') {
@@ -441,6 +515,20 @@ async function handleApi(req, res, session, pathname) {
       sendJson(res, 200, record);
       return;
     }
+  }
+
+  if (pathname.startsWith('/api/special-days/') && req.method === 'DELETE') {
+    if (!requireAuth(session, res)) return;
+    const id = Number(pathname.split('/').pop());
+    const idx = data.specialDays.findIndex((d) => d.id === id);
+    if (idx === -1) {
+      sendJson(res, 404, { error: 'Not found' });
+      return;
+    }
+    data.specialDays.splice(idx, 1);
+    saveData(data);
+    sendJson(res, 200, { success: true });
+    return;
   }
 
   if (pathname === '/api/notes') {
@@ -469,6 +557,58 @@ async function handleApi(req, res, session, pathname) {
       return;
     }
     data.notes.splice(idx, 1);
+    saveData(data);
+    sendJson(res, 200, { success: true });
+    return;
+  }
+
+  if (pathname === '/api/favorites') {
+    if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
+      sendJson(res, 200, data.favorites);
+      return;
+    }
+    if (req.method === 'POST') {
+      if (!requireAuth(session, res)) return;
+      const payload = JSON.parse(await readBody(req) || '{}');
+      const id = data.nextIds.favorites++;
+      const weekOf = payload.weekOf || new Date().toISOString().slice(0, 10);
+      const songUpload = payload.songFile ? storeUpload(payload.songFile) : null;
+      const movieUpload = payload.movieFile ? storeUpload(payload.movieFile) : null;
+      const record = {
+        id,
+        weekOf,
+        song: payload.song || '',
+        movie: payload.movie || '',
+        notes: payload.notes || '',
+        songUpload,
+        movieUpload,
+        created_at: new Date().toISOString()
+      };
+      data.favorites.unshift(record);
+      saveData(data);
+      sendJson(res, 200, record);
+      return;
+    }
+  }
+
+  if (pathname.startsWith('/api/favorites/') && req.method === 'DELETE') {
+    if (!requireAuth(session, res)) return;
+    const id = Number(pathname.split('/').pop());
+    const idx = data.favorites.findIndex((f) => f.id === id);
+    if (idx === -1) {
+      sendJson(res, 404, { error: 'Not found' });
+      return;
+    }
+    const [removed] = data.favorites.splice(idx, 1);
+    if (removed.songUpload?.filename) {
+      const p = path.join(UPLOAD_DIR, removed.songUpload.filename);
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+    }
+    if (removed.movieUpload?.filename) {
+      const p = path.join(UPLOAD_DIR, removed.movieUpload.filename);
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+    }
     saveData(data);
     sendJson(res, 200, { success: true });
     return;
@@ -505,12 +645,14 @@ async function handleApi(req, res, session, pathname) {
 }
 
 const protectedPages = new Set([
+  '/index.html',
   '/memories.html',
   '/blog.html',
   '/dates.html',
   '/special-days.html',
   '/notes.html',
-  '/fun-zone.html'
+  '/fun-zone.html',
+  '/favorites.html'
 ]);
 
 const server = http.createServer(async (req, res) => {
@@ -535,7 +677,7 @@ const server = http.createServer(async (req, res) => {
 
   const cleanPath = pathname === '/' ? '/index.html' : pathname;
   if (protectedPages.has(cleanPath) && !session) {
-    res.writeHead(302, { Location: '/index.html' });
+    res.writeHead(302, { Location: '/login.html' });
     res.end();
     return;
   }

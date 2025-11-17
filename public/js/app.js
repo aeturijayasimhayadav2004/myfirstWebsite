@@ -7,6 +7,22 @@ async function apiRequest(url, options = {}) {
   return res.json();
 }
 
+async function requireSession(page) {
+  try {
+    const status = await apiRequest('/api/session/status');
+    if (!status.authenticated && page !== '/login.html') {
+      window.location.href = '/login.html';
+    }
+    if (status.authenticated && page === '/login.html') {
+      window.location.href = '/index.html';
+    }
+  } catch (err) {
+    if (page !== '/login.html') {
+      window.location.href = '/login.html';
+    }
+  }
+}
+
 async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -34,9 +50,10 @@ function bindLogin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
-      status.textContent = 'Welcome back!';
+      status.textContent = 'Welcome back! Redirecting...';
       status.classList.remove('muted');
       form.reset();
+      setTimeout(() => (window.location.href = '/index.html'), 400);
     } catch (err) {
       status.textContent = 'Login failed';
       status.classList.add('muted');
@@ -50,7 +67,7 @@ function bindLogout() {
   buttons.forEach((btn) => {
     btn.addEventListener('click', async () => {
       await apiRequest('/api/session/logout', { method: 'POST' });
-      window.location.href = '/index.html';
+      window.location.href = '/login.html';
     });
   });
 }
@@ -64,9 +81,15 @@ async function loadEvents() {
       .map(
         (ev) => `<li><strong>${ev.title}</strong><div class="muted">${new Date(ev.event_date).toDateString()}</div><p>${
           ev.description || ''
-        }</p></li>`
+        }</p><button class="btn delete-event" data-id="${ev.id}">Delete</button></li>`
       )
       .join('');
+    container.querySelectorAll('.delete-event').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiRequest(`/api/home/events/${btn.dataset.id}`, { method: 'DELETE' });
+        loadEvents();
+      });
+    });
   } catch (err) {
     container.innerHTML = '<li class="muted">Unable to load events</li>';
   }
@@ -120,7 +143,8 @@ function bindMemoryForm() {
   if (!form) return;
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const file = form.file.files[0];
+    const fileInput = form.querySelector('input[type="file"]');
+    const file = fileInput?.files?.[0];
     if (!file) {
       alert('Please choose a file first.');
       return;
@@ -153,11 +177,17 @@ async function loadBlog() {
     const posts = await apiRequest('/api/blog');
     container.innerHTML = posts
       .map(
-        (p) => `<li><h3>${p.title}</h3><div class="muted">${p.author} · ${new Date(p.created_at).toDateString()}</div><p>${
-          p.body
-        }</p></li>`
+        (p) => `<li><h3>${p.title}</h3><div class="muted">${p.author} · ${new Date(
+          p.created_at
+        ).toDateString()}</div><p>${p.body}</p><button class="btn delete-post" data-id="${p.id}">Delete</button></li>`
       )
       .join('');
+    container.querySelectorAll('.delete-post').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiRequest(`/api/blog/${btn.dataset.id}`, { method: 'DELETE' });
+        loadBlog();
+      });
+    });
   } catch (err) {
     container.innerHTML = '<li class="muted">Unable to load posts</li>';
   }
@@ -194,21 +224,33 @@ async function loadDates() {
         .map(
           (idea) => `<li><div class="tag">${idea.status}</div><strong>${idea.title}</strong><p class="muted">${
             idea.notes || ''
-          }</p></li>`
+          }</p><button class="btn delete-idea" data-id="${idea.id}">Delete</button></li>`
         )
         .join('');
+      ideaContainer.querySelectorAll('.delete-idea').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          await apiRequest(`/api/dates/ideas/${btn.dataset.id}`, { method: 'DELETE' });
+          loadDates();
+        });
+      });
     }
     if (bucketContainer) {
       bucketContainer.innerHTML = bucket
         .map(
           (item) => `<li><label><input type="checkbox" data-id="${item.id}" ${
             item.completed ? 'checked' : ''
-          } /> ${item.title}</label></li>`
+          } /> ${item.title}</label> <button class="btn delete-bucket" data-id="${item.id}">Delete</button></li>`
         )
         .join('');
       bucketContainer.querySelectorAll('input[type="checkbox"]').forEach((box) => {
         box.addEventListener('change', async () => {
           await apiRequest(`/api/dates/bucket/${box.dataset.id}/toggle`, { method: 'PUT' });
+          loadDates();
+        });
+      });
+      bucketContainer.querySelectorAll('.delete-bucket').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          await apiRequest(`/api/dates/bucket/${btn.dataset.id}`, { method: 'DELETE' });
           loadDates();
         });
       });
@@ -268,9 +310,15 @@ async function loadSpecialDays() {
         const countdown = diff >= 0 ? `${diff} days away` : 'Already celebrated';
         return `<li><strong>${d.title}</strong><div class="muted">${new Date(d.event_date).toDateString()} · ${countdown}</div><p>${
           d.description || ''
-        }</p></li>`;
+        }</p><button class="btn delete-special" data-id="${d.id}">Delete</button></li>`;
       })
       .join('');
+    list.querySelectorAll('.delete-special').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiRequest(`/api/special-days/${btn.dataset.id}`, { method: 'DELETE' });
+        loadSpecialDays();
+      });
+    });
   } catch (err) {
     list.innerHTML = '<li class="muted">Unable to load dates</li>';
   }
@@ -317,6 +365,62 @@ async function loadNotes() {
   } catch (err) {
     list.innerHTML = '<li class="muted">Login to see notes.</li>';
   }
+}
+
+async function loadFavorites() {
+  const list = document.getElementById('favoritesList');
+  if (!list) return;
+  try {
+    const entries = await apiRequest('/api/favorites');
+    list.innerHTML = entries
+      .map((f) => {
+        const songFile = f.songUpload ? `<a href="/uploads/${f.songUpload.filename}" download>Download song</a>` : '';
+        const movieFile = f.movieUpload ? `<a href="/uploads/${f.movieUpload.filename}" download>Download movie file</a>` : '';
+        return `<li><div class="muted">Week of ${f.weekOf}</div><strong>Song:</strong> ${f.song || '—'}<br/><strong>Movie:</strong> ${
+          f.movie || '—'
+        }<p class="muted">${f.notes || ''}</p><div class="pill-row">${songFile} ${movieFile}</div><button class="btn delete-favorite" data-id="${
+          f.id
+        }">Delete</button></li>`;
+      })
+      .join('');
+    list.querySelectorAll('.delete-favorite').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await apiRequest(`/api/favorites/${btn.dataset.id}`, { method: 'DELETE' });
+        loadFavorites();
+      });
+    });
+  } catch (err) {
+    list.innerHTML = '<li class="muted">Login to see weekly picks.</li>';
+  }
+}
+
+function bindFavoritesForm() {
+  const form = document.getElementById('favoriteForm');
+  if (!form) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    const payload = { ...data };
+    const songFile = form.songFile.files[0];
+    const movieFile = form.movieFile.files[0];
+    if (songFile) {
+      payload.songFile = { name: songFile.name, type: songFile.type, data: await fileToBase64(songFile) };
+    }
+    if (movieFile) {
+      payload.movieFile = { name: movieFile.name, type: movieFile.type, data: await fileToBase64(movieFile) };
+    }
+    try {
+      await apiRequest('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      form.reset();
+      loadFavorites();
+    } catch (err) {
+      alert('Login to save your picks.');
+    }
+  });
 }
 
 function bindNotesForm() {
@@ -385,6 +489,7 @@ async function loadFunZone() {
 }
 
 function init() {
+  requireSession(window.location.pathname);
   bindLogin();
   bindLogout();
   bindEventForm();
@@ -393,6 +498,7 @@ function init() {
   bindDateForms();
   bindSpecialDaysForm();
   bindNotesForm();
+  bindFavoritesForm();
   loadEvents();
   loadMemories();
   loadBlog();
@@ -400,6 +506,7 @@ function init() {
   loadSpecialDays();
   loadNotes();
   loadFunZone();
+  loadFavorites();
 }
 
 document.addEventListener('DOMContentLoaded', init);
