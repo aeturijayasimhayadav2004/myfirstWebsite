@@ -18,6 +18,7 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 ### Environment variables
 
 - `OURWORLD_PASSWORD` – required shared password (set it in the environment so it never appears in client code)
+- `SESSION_SECRET` – salt used for PBKDF2 hashing and cookie secrets (set this to a long random value in Render)
 - `PORT` – optional port override
 
 ## Features
@@ -37,4 +38,4 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 
 Use the included `render.yaml` so Render provisions a **Node** web service that runs `npm install` and starts the app with `node server.js`. A `.nvmrc` is checked in to pin Node **18** for consistent PBKDF2 behavior across deploys. Render health checks call `/api/health` (already configured in the manifest).
 
-If you previously created the service as Python (because `requirements.txt` exists for compatibility), update the Render dashboard start command to `node server.js`—or keep it as `python server.py`, which delegates to the Node entrypoint. Set `OURWORLD_PASSWORD` (and optionally `SESSION_SECRET`) in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.
+If you previously created the service as Python (because `requirements.txt` exists for compatibility), update the Render dashboard start command to `node server.js`—or keep it as `python server.py`, which delegates to the Node entrypoint. Set `OURWORLD_PASSWORD` and `SESSION_SECRET` in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.

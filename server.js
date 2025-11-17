@@ -13,6 +13,7 @@ const DATA_FILE = path.join(DATA_DIR, 'store.json');
 const SESSION_COOKIE = 'ourworld.sid';
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const PASSWORD_SALT = process.env.SESSION_SECRET || 'ourworld-salt';
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -151,7 +152,7 @@ function clearSession(res) {
 }
 
 function pbkdf2Hash(password) {
-  return crypto.pbkdf2Sync(password, 'ourworld-salt', 100000, 64, 'sha512').toString('hex');
+  return crypto.pbkdf2Sync(password, PASSWORD_SALT, 100000, 64, 'sha512').toString('hex');
 }
 
 function verifyPassword(password) {

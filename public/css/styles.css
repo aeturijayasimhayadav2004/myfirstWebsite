@@ -20,6 +20,7 @@ body {
     var(--bg);
   color: var(--text);
   min-height: 100vh;
+  position: relative;
 }
 
 .centered {
@@ -372,71 +373,181 @@ form .btn {
 
 /* Sunflower page */
 .sunflower-body {
-  background: radial-gradient(circle at 20% 20%, rgba(255, 199, 66, 0.12), transparent 35%),
-    radial-gradient(circle at 80% 10%, rgba(255, 226, 120, 0.2), transparent 40%),
-    linear-gradient(135deg, #1c0f2b, #12091f 50%, #1d0f2b);
+  background: linear-gradient(135deg, rgba(255, 230, 150, 0.45), rgba(255, 213, 79, 0.55)),
+    url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+  color: #2a1905;
 }
 
 .sunflower-card {
-  background: linear-gradient(120deg, rgba(255, 224, 138, 0.08), rgba(255, 196, 82, 0.08));
-  border: 1px solid rgba(255, 224, 138, 0.2);
+  background: rgba(255, 247, 206, 0.8);
+  border: 1px solid rgba(255, 215, 96, 0.5);
+  color: #2a1905;
+  box-shadow: 0 25px 50px rgba(255, 196, 82, 0.35);
+}
+
+.sunflower-body .navbar {
+  background: rgba(255, 244, 191, 0.88);
+  color: #2a1905;
+}
+
+.sunflower-body .navbar nav a,
+.sunflower-body .profile-chip,
+.sunflower-body .profile-label {
+  color: #2a1905;
+}
+
+.sunflower-body .profile-chip {
+  background: rgba(255, 215, 96, 0.2);
+  border-color: rgba(42, 25, 5, 0.2);
 }
 
 .quote-box {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.85);
   padding: 1rem;
   border-radius: 14px;
   margin-top: 0.75rem;
   font-size: 1.1rem;
   line-height: 1.5;
+  color: #3a250d;
 }
 
 .bouquet {
   position: relative;
-  width: 160px;
-  height: 200px;
+  width: 220px;
+  height: 220px;
   margin-left: auto;
+  display: grid;
+  place-items: center;
 }
 
 .bouquet .stem {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: 8px;
-  height: 120px;
+  width: 10px;
+  height: 140px;
   background: linear-gradient(#2bce89, #198b5b);
   transform: translateX(-50%);
   border-radius: 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
 }
 
 .bouquet .bloom {
   position: absolute;
-  font-size: 48px;
+  font-size: 56px;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.2));
-  animation: sway 4s ease-in-out infinite;
+  animation: sway 5s ease-in-out infinite;
 }
 
 .bouquet .bloom-alt {
-  top: 22px;
-  left: 10px;
-  animation-delay: 0.5s;
+  top: 30px;
+  left: 20px;
+  animation-delay: 0.6s;
 }
 
 .bouquet .bloom-small {
-  top: 12px;
-  right: 0;
-  font-size: 42px;
-  animation-delay: 1s;
+  top: 18px;
+  right: 14px;
+  font-size: 48px;
+  animation-delay: 1.1s;
+}
+
+.bouquet .bloom-low {
+  bottom: 50px;
+  left: 60px;
+  font-size: 46px;
+  animation-delay: 0.2s;
 }
 
 @keyframes sway {
   0%,
   100% {
-    transform: rotate(-3deg);
+    transform: translateY(0) rotate(-2deg);
   }
   50% {
-    transform: rotate(3deg);
+    transform: translateY(-6px) rotate(3deg);
   }
+}
+
+/* Page backdrops */
+.home-body {
+  background: linear-gradient(120deg, rgba(255, 218, 170, 0.55), rgba(133, 86, 45, 0.35)),
+    url('https://images.unsplash.com/photo-1504595403659-9088ce801e29?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+}
+
+.memories-body {
+  background: linear-gradient(120deg, rgba(34, 26, 54, 0.72), rgba(14, 9, 28, 0.9)),
+    url('https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+  background-blend-mode: screen, normal;
+}
+
+.blog-body {
+  background: linear-gradient(140deg, rgba(255, 223, 237, 0.5), rgba(196, 174, 255, 0.45)),
+    url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+}
+
+.dates-body {
+  background: linear-gradient(140deg, rgba(255, 171, 193, 0.55), rgba(255, 219, 141, 0.45)),
+    url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+}
+
+.special-body {
+  background: linear-gradient(130deg, rgba(146, 199, 255, 0.6), rgba(255, 255, 255, 0.4)),
+    url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+}
+
+.favorites-body {
+  background: radial-gradient(circle at 30% 20%, rgba(80, 110, 255, 0.35), transparent 40%),
+    linear-gradient(135deg, rgba(7, 10, 34, 0.9), rgba(13, 18, 46, 0.9)),
+    url('https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+  background-blend-mode: screen, normal, normal;
+}
+
+.profile-body {
+  background: linear-gradient(160deg, rgba(166, 193, 255, 0.45), rgba(92, 227, 230, 0.4)),
+    url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+}
+
+.login-body {
+  background: linear-gradient(135deg, rgba(24, 18, 43, 0.75), rgba(61, 35, 95, 0.75)),
+    url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+}
+
+.blog-body main,
+.dates-body main,
+.memories-body main,
+.home-body main,
+.special-body main,
+.favorites-body main,
+.profile-body main,
+.login-body main,
+.sunflower-body main {
+  position: relative;
+  z-index: 1;
+}
+
+.blog-body::before,
+.dates-body::before,
+.memories-body::before,
+.home-body::before,
+.special-body::before,
+.favorites-body::before,
+.profile-body::before,
+.login-body::before,
+.sunflower-body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(0, 0, 0, 0.25), transparent 35%),
+    radial-gradient(circle at 80% 0%, rgba(0, 0, 0, 0.18), transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.space-quote {
+  background: rgba(12, 17, 46, 0.65);
+  color: #e9f0ff;
+  border: 1px solid rgba(133, 170, 255, 0.35);
 }
 
 /* Profile layout tweaks */

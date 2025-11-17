@@ -532,6 +532,21 @@ function loadBabluPage() {
   quoteBox.textContent = pick;
 }
 
+function loadInterstellarQuote() {
+  const quoteBox = document.getElementById('interstellarQuote');
+  if (!quoteBox) return;
+  const quotes = [
+    "Love is the one thing that transcends time and space.",
+    "Do not go gentle into that good night.",
+    "Murphy's law doesn't mean that something bad will happen. It means that whatever can happen, will happen.",
+    "We used to look up at the sky and wonder at our place in the stars.",
+    "Cooper, we're going to be spending a lot of time together. We should learn to talk.",
+    "Once you're a parent, you're the ghost of your children's future.",
+  ];
+  const pick = quotes[Math.floor(Math.random() * quotes.length)];
+  quoteBox.textContent = `“${pick}” — Interstellar`;
+}
+
 function init() {
   requireSession(window.location.pathname);
   loadProfile(window.location.pathname === '/login.html');
@@ -551,6 +566,7 @@ function init() {
   loadSpecialDays();
   loadFavorites();
   loadBabluPage();
+  loadInterstellarQuote();
 }
 
 document.addEventListener('DOMContentLoaded', init);
