@@ -691,15 +691,24 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  const targetPath = path.normalize(path.join(PUBLIC_DIR, cleanPath));
+  let targetPath = path.normalize(path.join(PUBLIC_DIR, cleanPath));
   if (!targetPath.startsWith(PUBLIC_DIR)) {
     sendText(res, 400, 'Invalid path');
     return;
   }
 
   if (!fs.existsSync(targetPath)) {
-    sendText(res, 404, 'Not found');
-    return;
+    if (!path.extname(cleanPath)) {
+      const htmlFallback = path.normalize(path.join(PUBLIC_DIR, `${cleanPath}.html`));
+      if (htmlFallback.startsWith(PUBLIC_DIR) && fs.existsSync(htmlFallback)) {
+        targetPath = htmlFallback;
+      }
+    }
+
+    if (!fs.existsSync(targetPath)) {
+      sendText(res, 404, 'Not found');
+      return;
+    }
   }
 
   serveStatic(req, res, targetPath);

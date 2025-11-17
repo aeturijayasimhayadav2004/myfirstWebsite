@@ -509,8 +509,14 @@ form .btn {
 }
 
 .login-body {
-  background: linear-gradient(135deg, rgba(24, 18, 43, 0.75), rgba(61, 35, 95, 0.75)),
-    url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+  background: radial-gradient(circle at 20% 20%, rgba(143, 108, 221, 0.35), transparent 35%),
+    linear-gradient(160deg, #1f0f3a, #3a1c73, #5a2a8b);
+}
+
+.login-body form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .blog-body main,
