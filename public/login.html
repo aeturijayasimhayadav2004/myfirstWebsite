@@ -9,11 +9,17 @@
   <body>
     <main class="centered">
       <div class="card" style="max-width: 420px; width: 100%">
-        <h1>Welcome back</h1>
-        <p class="muted">Use our shared password to unlock our world.</p>
+        <div class="login-profile">
+          <div class="profile-avatar large" id="loginAvatar" aria-hidden="true"></div>
+          <div>
+            <h1>Welcome back</h1>
+            <p class="muted">Use our shared password to unlock our world.</p>
+          </div>
+        </div>
         <form id="loginForm">
           <label for="password">Password</label>
           <input type="password" id="password" name="password" required />
+          <div class="spacer"></div>
           <button class="btn" type="submit">Login</button>
         </form>
         <p id="loginStatus" class="muted" aria-live="polite"></p>

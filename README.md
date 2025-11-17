@@ -13,7 +13,7 @@ npm start
 
 An empty `requirements.txt` is included to satisfy platforms that automatically run `pip install -r requirements.txt` during deploys; no Python dependencies are needed.
 
-The server defaults to port **3000**. Sessions are HTTP-only cookies that last one week with `sameSite=lax` and are validated entirely in-process.
+The server defaults to port **3000**. Sessions are HTTP-only cookies that last one week with `sameSite=lax`; when `NODE_ENV=production` (including Render) cookies are also marked `Secure` so they travel only over HTTPS.
 
 ### Environment variables
 
@@ -25,15 +25,14 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 
 - **Authentication**: `/api/session/login` uses PBKDF2-hashed passwords; `/api/session/logout` clears the session and cookie.
 - **Health checks**: `/api/health` confirms storage availability.
-- **Protected content**: All app pages (except `/login.html`) require an active session; missing or expired sessions redirect to the login page.
-- **Home**: Add and view upcoming events via `/api/home/events`.
+- **Protected content**: All app pages (except `/login.html`) require an active session; missing or expired sessions redirect to the login page, and every data API (events, memories, blog, dates, special days, notes, favorites) enforces authentication.
+- **Home**: Add and view upcoming events via `/api/home/events` (auth required).
 - **Memories**: Authenticated photo uploads stored in `/uploads` with metadata in the local data store.
-- **Blog**: Create and read posts through `/api/blog`.
-- **Dates**: Manage date ideas and bucket-list items at `/api/dates`, `/api/dates/ideas`, and `/api/dates/bucket`.
-- **Special Days**: Store milestones and countdowns through `/api/special-days`.
+- **Blog**: Create and read posts through `/api/blog` (auth required).
+- **Dates**: Manage date ideas and bucket-list items at `/api/dates`, `/api/dates/ideas`, and `/api/dates/bucket` (auth required).
+- **Special Days**: Store milestones and countdowns through `/api/special-days` (auth required).
 - **Notes**: Authenticated love notes with newest-first ordering via `/api/notes`.
-- **Fun Zone**: Wheel ideas, quiz Q&A, and polls with voting at `/api/fun` and `/api/fun/polls/:id/vote`.
-- **Weekly Picks**: Capture weekly favorite songs/movies (with optional uploads) via `/api/favorites`.
+- **Weekly Picks**: Capture weekly favorite songs/movies via `/api/favorites` (auth required).
 
 ## Deploying on Render
 

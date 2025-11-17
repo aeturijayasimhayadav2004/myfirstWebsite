@@ -12,6 +12,7 @@ const DATA_DIR = path.join(ROOT, 'data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
 const SESSION_COOKIE = 'ourworld.sid';
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -31,6 +32,11 @@ function loadData() {
       specialDays: [],
       notes: [],
       favorites: [],
+      profile: {
+        name: 'Us',
+        bio: 'Together, always.',
+        avatar: null
+      },
       fun: {
         wheel: [
           { idea: 'Surprise takeaway night' },
@@ -91,6 +97,7 @@ function loadData() {
   }
 
   parsed.favorites = Array.isArray(parsed.favorites) ? parsed.favorites : [];
+  parsed.profile = parsed.profile || { name: 'Us', bio: 'Together, always.', avatar: null };
   parsed.nextIds = parsed.nextIds || {};
   parsed.nextIds.favorites = parsed.nextIds.favorites || 1;
 
@@ -132,12 +139,14 @@ function getSession(req) {
 
 function setSession(res, session) {
   const expires = new Date(Date.now() + ONE_WEEK_MS);
-  const cookie = `${SESSION_COOKIE}=${session.id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ONE_WEEK_MS / 1000}; Expires=${expires.toUTCString()}`;
+  const secure = IS_PROD ? '; Secure' : '';
+  const cookie = `${SESSION_COOKIE}=${session.id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${ONE_WEEK_MS / 1000}; Expires=${expires.toUTCString()}${secure}`;
   res.setHeader('Set-Cookie', cookie);
 }
 
 function clearSession(res) {
-  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax`);
+  const secure = IS_PROD ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax${secure}`);
 }
 
 function pbkdf2Hash(password) {
@@ -272,8 +281,56 @@ async function handleApi(req, res, session, pathname) {
     return;
   }
 
+  if (pathname === '/api/profile/public' && req.method === 'GET') {
+    const safe = data.profile || { name: 'Us', bio: 'Together, always.', avatar: null };
+    let avatarData = null;
+    if (safe.avatar?.filename) {
+      const filePath = path.join(UPLOAD_DIR, safe.avatar.filename);
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath);
+        avatarData = `data:${safe.avatar.mime || 'image/png'};base64,${content.toString('base64')}`;
+      }
+    }
+    sendJson(res, 200, { name: safe.name, bio: safe.bio, avatar: safe.avatar, avatarData });
+    return;
+  }
+
+  if (pathname === '/api/profile') {
+    if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
+      sendJson(res, 200, data.profile || {});
+      return;
+    }
+    if (req.method === 'POST') {
+      if (!requireAuth(session, res)) return;
+      const payload = JSON.parse(await readBody(req) || '{}');
+      const current = data.profile || { name: 'Us', bio: 'Together, always.', avatar: null };
+      if (payload.name) current.name = payload.name.slice(0, 120);
+      if (payload.bio !== undefined) current.bio = String(payload.bio).slice(0, 500);
+      if (payload.avatarFile) {
+        if (!payload.avatarFile.type?.startsWith('image/')) {
+          sendJson(res, 400, { error: 'Avatar must be an image' });
+          return;
+        }
+        const stored = storeUpload(payload.avatarFile);
+        if (stored) {
+          if (current.avatar?.filename) {
+            const p = path.join(UPLOAD_DIR, current.avatar.filename);
+            if (fs.existsSync(p)) fs.unlinkSync(p);
+          }
+          current.avatar = stored;
+        }
+      }
+      data.profile = current;
+      saveData(data);
+      sendJson(res, 200, current);
+      return;
+    }
+  }
+
   if (pathname === '/api/home/events') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, data.events);
       return;
     }
@@ -350,6 +407,7 @@ async function handleApi(req, res, session, pathname) {
 
   if (pathname === '/api/blog') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, data.blogPosts);
       return;
     }
@@ -387,6 +445,7 @@ async function handleApi(req, res, session, pathname) {
 
   if (pathname === '/api/dates/ideas') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, data.dateIdeas);
       return;
     }
@@ -440,6 +499,7 @@ async function handleApi(req, res, session, pathname) {
 
   if (pathname === '/api/dates') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, { ideas: data.dateIdeas, bucket: data.bucketItems });
       return;
     }
@@ -447,6 +507,7 @@ async function handleApi(req, res, session, pathname) {
 
   if (pathname === '/api/dates/bucket') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, data.bucketItems);
       return;
     }
@@ -502,6 +563,7 @@ async function handleApi(req, res, session, pathname) {
 
   if (pathname === '/api/special-days') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, data.specialDays);
       return;
     }
@@ -533,6 +595,7 @@ async function handleApi(req, res, session, pathname) {
 
   if (pathname === '/api/notes') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, data.notes.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)));
       return;
     }
@@ -572,12 +635,10 @@ async function handleApi(req, res, session, pathname) {
       if (!requireAuth(session, res)) return;
       const payload = JSON.parse(await readBody(req) || '{}');
       const id = data.nextIds.favorites++;
-      const weekOf = payload.weekOf || new Date().toISOString().slice(0, 10);
       const songUpload = payload.songFile ? storeUpload(payload.songFile) : null;
       const movieUpload = payload.movieFile ? storeUpload(payload.movieFile) : null;
       const record = {
         id,
-        weekOf,
         song: payload.song || '',
         movie: payload.movie || '',
         notes: payload.notes || '',
@@ -616,6 +677,7 @@ async function handleApi(req, res, session, pathname) {
 
   if (pathname === '/api/fun') {
     if (req.method === 'GET') {
+      if (!requireAuth(session, res)) return;
       sendJson(res, 200, data.fun);
       return;
     }
@@ -651,8 +713,8 @@ const protectedPages = new Set([
   '/dates.html',
   '/special-days.html',
   '/notes.html',
-  '/fun-zone.html',
-  '/favorites.html'
+  '/favorites.html',
+  '/profile.html'
 ]);
 
 const server = http.createServer(async (req, res) => {

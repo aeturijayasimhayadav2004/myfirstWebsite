@@ -16,9 +16,12 @@
         <a href="/dates.html">Dates</a>
         <a href="/special-days.html">Special Days</a>
         <a href="/notes.html">Notes</a>
-        <a href="/fun-zone.html">Fun Zone</a>
         <a href="/favorites.html">Weekly Picks</a>
       </nav>
+      <button class="profile-chip" type="button" onclick="window.location.href='/profile.html'">
+        <span class="profile-avatar" aria-hidden="true"></span>
+        <span class="profile-label" data-profile-name>Profile</span>
+      </button>
     </header>
     <main>
       <section class="hero">
@@ -26,21 +29,14 @@
           <p class="tag">Weekly Picks</p>
           <h1>Our soundtrack & screen time</h1>
           <p class="muted">Save the song and movie that defined this week. Files are private to us.</p>
-          <button class="btn logout-btn" type="button">Logout</button>
         </div>
         <div class="card">
-          <h3>Save this week's picks</h3>
+          <h3>Save favorites</h3>
           <form id="favoriteForm">
-            <label for="weekOf">Week of</label>
-            <input id="weekOf" name="weekOf" type="date" />
             <label for="song">Song</label>
             <input id="song" name="song" placeholder="Song title or link" />
-            <label for="songFile">Upload song (optional)</label>
-            <input id="songFile" name="songFile" type="file" accept="audio/*" />
             <label for="movie">Movie</label>
             <input id="movie" name="movie" placeholder="Movie title or link" />
-            <label for="movieFile">Upload movie poster/clip (optional)</label>
-            <input id="movieFile" name="movieFile" type="file" accept="image/*,video/*" />
             <label for="notes">Notes</label>
             <textarea id="notes" name="notes" rows="3" placeholder="Why we love this"></textarea>
             <button class="btn" type="submit">Save picks</button>

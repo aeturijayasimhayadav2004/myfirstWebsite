@@ -23,6 +23,44 @@ async function requireSession(page) {
   }
 }
 
+async function loadProfile(forPublic = false) {
+  const avatarTargets = document.querySelectorAll('.profile-avatar');
+  const nameTargets = document.querySelectorAll('[data-profile-name]');
+  const endpoint = forPublic ? '/api/profile/public' : '/api/profile';
+  try {
+    const profile = await apiRequest(endpoint);
+    const avatarUrl = profile.avatarData || (profile.avatar?.filename ? `/uploads/${profile.avatar.filename}` : null);
+    avatarTargets.forEach((el) => {
+      if (avatarUrl) {
+        el.style.backgroundImage = `url(${avatarUrl})`;
+        el.textContent = '';
+      } else {
+        el.style.backgroundImage = '';
+        el.textContent = (profile.name || 'Us').charAt(0).toUpperCase();
+      }
+    });
+    nameTargets.forEach((el) => {
+      el.textContent = profile.name || 'Us';
+    });
+    const bio = document.getElementById('profileBio');
+    if (bio) {
+      bio.textContent = profile.bio || 'Together, always.';
+    }
+    const loginAvatar = document.getElementById('loginAvatar');
+    if (loginAvatar) {
+      if (avatarUrl) {
+        loginAvatar.style.backgroundImage = `url(${avatarUrl})`;
+        loginAvatar.textContent = '';
+      } else {
+        loginAvatar.style.backgroundImage = '';
+        loginAvatar.textContent = (profile.name || 'Us').charAt(0).toUpperCase();
+      }
+    }
+  } catch (err) {
+    // ignore
+  }
+}
+
 async function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -61,14 +99,12 @@ function bindLogin() {
   });
 }
 
-function bindLogout() {
-  const buttons = document.querySelectorAll('.logout-btn');
-  if (!buttons.length) return;
-  buttons.forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      await apiRequest('/api/session/logout', { method: 'POST' });
-      window.location.href = '/login.html';
-    });
+function bindProfileLogout() {
+  const button = document.getElementById('profileLogout');
+  if (!button) return;
+  button.addEventListener('click', async () => {
+    await apiRequest('/api/session/logout', { method: 'POST' });
+    window.location.href = '/login.html';
   });
 }
 
@@ -222,11 +258,24 @@ async function loadDates() {
     if (ideaContainer) {
       ideaContainer.innerHTML = ideas
         .map(
-          (idea) => `<li><div class="tag">${idea.status}</div><strong>${idea.title}</strong><p class="muted">${
+          (idea) => `<li><div class="tag status" data-id="${idea.id}">${idea.status}</div><strong>${idea.title}</strong><p class="muted">${
             idea.notes || ''
-          }</p><button class="btn delete-idea" data-id="${idea.id}">Delete</button></li>`
+          }</p><div class="pill-row"><button class="btn ghost update-idea" data-id="${idea.id}">Toggle status</button><button class="btn delete-idea" data-id="${idea.id}">Delete</button></div></li>`
         )
         .join('');
+      ideaContainer.querySelectorAll('.update-idea').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const idea = ideas.find((i) => i.id === Number(btn.dataset.id));
+          const order = ['Planned', 'In Progress', 'Completed'];
+          const next = order[(order.indexOf(idea.status) + 1) % order.length];
+          await apiRequest(`/api/dates/ideas/${btn.dataset.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: next }),
+          });
+          loadDates();
+        });
+      });
       ideaContainer.querySelectorAll('.delete-idea').forEach((btn) => {
         btn.addEventListener('click', async () => {
           await apiRequest(`/api/dates/ideas/${btn.dataset.id}`, { method: 'DELETE' });
@@ -302,17 +351,39 @@ function bindDateForms() {
 async function loadSpecialDays() {
   const list = document.getElementById('specialDays');
   if (!list) return;
+  const timers = [];
   try {
     const days = await apiRequest('/api/special-days');
     list.innerHTML = days
-      .map((d) => {
-        const diff = Math.round((new Date(d.event_date) - new Date()) / (1000 * 60 * 60 * 24));
-        const countdown = diff >= 0 ? `${diff} days away` : 'Already celebrated';
-        return `<li><strong>${d.title}</strong><div class="muted">${new Date(d.event_date).toDateString()} · ${countdown}</div><p>${
-          d.description || ''
-        }</p><button class="btn delete-special" data-id="${d.id}">Delete</button></li>`;
-      })
+      .map(
+        (d) =>
+          `<li data-date="${d.event_date}" data-id="${d.id}"><strong>${d.title}</strong><div class="muted countdown">Loading timer...</div><p>${
+            d.description || ''
+          }</p><button class="btn delete-special" data-id="${d.id}">Delete</button></li>`
+      )
       .join('');
+    list.querySelectorAll('li').forEach((item) => {
+      const target = new Date(item.dataset.date).getTime();
+      const countdown = item.querySelector('.countdown');
+      const tick = () => {
+        const diff = target - Date.now();
+        if (Number.isNaN(diff)) {
+          countdown.textContent = 'Invalid date';
+          return;
+        }
+        const past = diff < 0;
+        const abs = Math.abs(diff);
+        const days = Math.floor(abs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((abs / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((abs / (1000 * 60)) % 60);
+        const seconds = Math.floor((abs / 1000) % 60);
+        countdown.textContent = past
+          ? `Already celebrated ${days}d ${hours}h ${minutes}m ${seconds}s ago`
+          : `${days}d ${hours}h ${minutes}m ${seconds}s away`;
+      };
+      tick();
+      timers.push(setInterval(tick, 1000));
+    });
     list.querySelectorAll('.delete-special').forEach((btn) => {
       btn.addEventListener('click', async () => {
         await apiRequest(`/api/special-days/${btn.dataset.id}`, { method: 'DELETE' });
@@ -373,15 +444,12 @@ async function loadFavorites() {
   try {
     const entries = await apiRequest('/api/favorites');
     list.innerHTML = entries
-      .map((f) => {
-        const songFile = f.songUpload ? `<a href="/uploads/${f.songUpload.filename}" download>Download song</a>` : '';
-        const movieFile = f.movieUpload ? `<a href="/uploads/${f.movieUpload.filename}" download>Download movie file</a>` : '';
-        return `<li><div class="muted">Week of ${f.weekOf}</div><strong>Song:</strong> ${f.song || '—'}<br/><strong>Movie:</strong> ${
-          f.movie || '—'
-        }<p class="muted">${f.notes || ''}</p><div class="pill-row">${songFile} ${movieFile}</div><button class="btn delete-favorite" data-id="${
-          f.id
-        }">Delete</button></li>`;
-      })
+      .map(
+        (f) =>
+          `<li><div class="favorite-row"><div><strong>${f.song || 'Song TBD'}</strong><p class="muted">${
+            f.movie || 'Movie TBD'
+          }</p><p class="muted">${f.notes || ''}</p></div><button class="btn delete-favorite" data-id="${f.id}">Delete</button></div></li>`
+      )
       .join('');
     list.querySelectorAll('.delete-favorite').forEach((btn) => {
       btn.addEventListener('click', async () => {
@@ -401,14 +469,6 @@ function bindFavoritesForm() {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form));
     const payload = { ...data };
-    const songFile = form.songFile.files[0];
-    const movieFile = form.movieFile.files[0];
-    if (songFile) {
-      payload.songFile = { name: songFile.name, type: songFile.type, data: await fileToBase64(songFile) };
-    }
-    if (movieFile) {
-      payload.movieFile = { name: movieFile.name, type: movieFile.type, data: await fileToBase64(movieFile) };
-    }
     try {
       await apiRequest('/api/favorites', {
         method: 'POST',
@@ -443,55 +503,35 @@ function bindNotesForm() {
   });
 }
 
-async function loadFunZone() {
-  const wheel = document.getElementById('funWheel');
-  const quiz = document.getElementById('funQuiz');
-  const polls = document.getElementById('funPolls');
-  if (!wheel && !quiz && !polls) return;
-  try {
-    const data = await apiRequest('/api/fun');
-    if (wheel) {
-      wheel.innerHTML = data.wheel.map((i) => `<li>${i.idea}</li>`).join('');
+function bindProfileForm() {
+  const form = document.getElementById('profileForm');
+  if (!form) return;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form));
+    const payload = { name: data.name, bio: data.bio };
+    const avatarFile = form.avatar.files[0];
+    if (avatarFile) {
+      payload.avatarFile = { name: avatarFile.name, type: avatarFile.type, data: await fileToBase64(avatarFile) };
     }
-    if (quiz) {
-      quiz.innerHTML = data.quiz
-        .map((q) => `<li><strong>${q.question}</strong><div class="muted">Answer: ${q.answer}</div></li>`)
-        .join('');
-    }
-    if (polls) {
-      polls.innerHTML = data.polls
-        .map(
-          (p) => `<li><strong>${p.prompt}</strong><div>${p.options
-            .map(
-              (o) => `<button class="btn vote" data-poll="${p.id}" data-option="${o.id}">${o.option_text} (${o.votes})</button>`
-            )
-            .join(' ')}</div></li>`
-        )
-        .join('');
-      polls.querySelectorAll('.vote').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          try {
-            await apiRequest(`/api/fun/polls/${btn.dataset.poll}/vote`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ optionId: btn.dataset.option }),
-            });
-            loadFunZone();
-          } catch (err) {
-            alert('Login to vote.');
-          }
-        });
+    try {
+      await apiRequest('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+      loadProfile();
+    } catch (err) {
+      alert('Profile update requires login.');
     }
-  } catch (err) {
-    if (wheel) wheel.innerHTML = '<li class="muted">Unable to load fun ideas</li>';
-  }
+  });
 }
 
 function init() {
   requireSession(window.location.pathname);
+  loadProfile(window.location.pathname === '/login.html');
   bindLogin();
-  bindLogout();
+  bindProfileLogout();
   bindEventForm();
   bindMemoryForm();
   bindBlogForm();
@@ -499,13 +539,13 @@ function init() {
   bindSpecialDaysForm();
   bindNotesForm();
   bindFavoritesForm();
+  bindProfileForm();
   loadEvents();
   loadMemories();
   loadBlog();
   loadDates();
   loadSpecialDays();
   loadNotes();
-  loadFunZone();
   loadFavorites();
 }
 
