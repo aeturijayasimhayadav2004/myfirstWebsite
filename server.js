@@ -32,11 +32,11 @@ function loadData() {
       notes: [],
       fun: {
         wheel: [
-          'Surprise takeaway night',
-          'Movie marathon',
-          'Stargazing date',
-          'Board game battle',
-          'Cook together'
+          { idea: 'Surprise takeaway night' },
+          { idea: 'Movie marathon' },
+          { idea: 'Stargazing date' },
+          { idea: 'Board game battle' },
+          { idea: 'Cook together' }
         ],
         quiz: [
           { question: 'First trip together?', answer: 'The beach getaway' },
@@ -45,11 +45,11 @@ function loadData() {
         polls: [
           {
             id: 1,
-            prompt: 'Pick tonight\'s vibe',
+            prompt: "Pick tonight's vibe",
             options: [
-              { id: 1, text: 'Cozy movie', votes: 0 },
-              { id: 2, text: 'Fancy dinner', votes: 0 },
-              { id: 3, text: 'Game night', votes: 0 }
+              { id: 1, option_text: 'Cozy movie', votes: 0 },
+              { id: 2, option_text: 'Fancy dinner', votes: 0 },
+              { id: 3, option_text: 'Game night', votes: 0 }
             ]
           }
         ]
@@ -67,7 +67,28 @@ function loadData() {
     fs.writeFileSync(DATA_FILE, JSON.stringify(seeded, null, 2));
   }
   const raw = fs.readFileSync(DATA_FILE, 'utf8');
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+
+  // Normalize legacy records created before structured fun/poll data
+  if (Array.isArray(parsed.fun?.wheel)) {
+    parsed.fun.wheel = parsed.fun.wheel.map((entry) =>
+      typeof entry === 'string' ? { idea: entry } : { idea: entry.idea || entry.text || 'Fun idea' }
+    );
+  }
+  if (Array.isArray(parsed.fun?.polls)) {
+    parsed.fun.polls = parsed.fun.polls.map((poll) => ({
+      ...poll,
+      options: Array.isArray(poll.options)
+        ? poll.options.map((opt, idx) => ({
+            id: opt.id ?? idx + 1,
+            option_text: opt.option_text || opt.text || String(opt.option || opt.idea || 'Option'),
+            votes: opt.votes ?? 0
+          }))
+        : []
+    }));
+  }
+
+  return parsed;
 }
 
 function saveData(data) {
@@ -359,6 +380,13 @@ async function handleApi(req, res, session, pathname) {
     return;
   }
 
+  if (pathname === '/api/dates') {
+    if (req.method === 'GET') {
+      sendJson(res, 200, { ideas: data.dateIdeas, bucket: data.bucketItems });
+      return;
+    }
+  }
+
   if (pathname === '/api/dates/bucket') {
     if (req.method === 'GET') {
       sendJson(res, 200, data.bucketItems);
@@ -376,18 +404,26 @@ async function handleApi(req, res, session, pathname) {
     }
   }
 
-  if (pathname.startsWith('/api/dates/bucket/') && req.method === 'PATCH') {
-    if (!requireAuth(session, res)) return;
-    const id = Number(pathname.split('/').pop());
-    const item = data.bucketItems.find((i) => i.id === id);
-    if (!item) {
-      sendJson(res, 404, { error: 'Not found' });
+  if (pathname.startsWith('/api/dates/bucket/')) {
+    const parts = pathname.split('/').filter(Boolean);
+    const last = parts[parts.length - 1];
+    const targetId = Number(last === 'toggle' ? parts[parts.length - 2] : last);
+    if (req.method === 'PATCH' || req.method === 'PUT') {
+      if (!requireAuth(session, res)) return;
+      if (!Number.isFinite(targetId)) {
+        sendJson(res, 400, { error: 'Invalid id' });
+        return;
+      }
+      const item = data.bucketItems.find((i) => i.id === targetId);
+      if (!item) {
+        sendJson(res, 404, { error: 'Not found' });
+        return;
+      }
+      item.completed = !item.completed;
+      saveData(data);
+      sendJson(res, 200, item);
       return;
     }
-    item.completed = !item.completed;
-    saveData(data);
-    sendJson(res, 200, item);
-    return;
   }
 
   if (pathname === '/api/special-days') {

@@ -11,6 +11,8 @@ npm install  # installs nothing but records the lockfile
 npm start
 ```
 
+An empty `requirements.txt` is included to satisfy platforms that automatically run `pip install -r requirements.txt` during deploys; no Python dependencies are needed.
+
 The server defaults to port **3000**. Sessions are HTTP-only cookies that last one week with `sameSite=lax` and are validated entirely in-process.
 
 ### Environment variables
