@@ -36,4 +36,4 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 
 ## Deploying on Render
 
-The included `render.yaml` configures a Node 18 web service that runs `npm install` (no downloads needed) and `node server.js`. Set `OURWORLD_PASSWORD` in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.
+Use the included `render.yaml` so Render provisions a **Node** web service that runs `npm install` and starts the app with `node server.js`. If you previously created the service as Python (because `requirements.txt` exists for compatibility), update the Render dashboard start command to `node server.js`—or keep it as `python server.py`, which now delegates to the Node entrypoint. Set `OURWORLD_PASSWORD` (and optionally `SESSION_SECRET`) in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.
