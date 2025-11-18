@@ -24,7 +24,7 @@
       </button>
     </header>
     <main>
-      <section class="hero profile-hero">
+      <section class="hero profile-hero profile-layout">
         <div class="profile-card">
           <div class="profile-avatar large" aria-hidden="true"></div>
           <div>
@@ -36,23 +36,38 @@
               <span>Session: 1 week</span>
               <span>Uploads stay local</span>
             </div>
+            <div class="profile-badges">
+              <span class="info-chip">Encrypted auth</span>
+              <span class="info-chip">Private uploads</span>
+              <span class="info-chip">Couple-only</span>
+            </div>
           </div>
         </div>
-        <div class="card">
-          <h3>Update profile</h3>
-          <form id="profileForm">
-            <label for="name">Display name</label>
-            <input id="name" name="name" required />
-            <label for="bio">About us</label>
-            <textarea id="bio" name="bio" rows="3" placeholder="Sweet description"></textarea>
-            <label for="avatar">Profile photo</label>
-            <input id="avatar" name="avatar" type="file" accept="image/*" />
-            <div class="profile-actions">
-              <button class="btn" type="submit">Save profile</button>
+        <div class="profile-stack">
+          <div class="card">
+            <h3>Update profile</h3>
+            <form id="profileForm">
+              <label for="name">Display name</label>
+              <input id="name" name="name" required />
+              <label for="bio">About us</label>
+              <textarea id="bio" name="bio" rows="3" placeholder="Sweet description"></textarea>
+              <label for="avatar">Profile photo</label>
+              <input id="avatar" name="avatar" type="file" accept="image/*" />
+              <div class="profile-actions">
+                <button class="btn" type="submit">Save profile</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Security &amp; session</h3>
+            <ul class="info-list">
+              <li><span class="info-dot" aria-hidden="true"></span><span>All pages stay private after login</span></li>
+              <li><span class="info-dot" aria-hidden="true"></span><span>One-week sessions with HTTPS cookies</span></li>
+              <li><span class="info-dot" aria-hidden="true"></span><span>Uploads remain on this device or host</span></li>
+            </ul>
+            <div class="logout-zone">
+              <button class="btn ghost" id="profileLogout" type="button">Logout</button>
             </div>
-          </form>
-          <div class="profile-actions">
-            <button class="btn ghost" id="profileLogout" type="button">Logout</button>
           </div>
         </div>
       </section>
