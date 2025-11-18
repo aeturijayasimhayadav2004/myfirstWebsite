@@ -482,8 +482,7 @@ form .btn {
 }
 
 .blog-body {
-  background: linear-gradient(140deg, rgba(255, 223, 237, 0.5), rgba(196, 174, 255, 0.45)),
-    url('https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=1600&q=80') center/cover fixed;
+  background: linear-gradient(150deg, rgba(33, 17, 60, 0.9), rgba(73, 34, 125, 0.85));
 }
 
 .dates-body {
@@ -605,4 +604,127 @@ form .btn {
 body {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+}
+
+/* Responsive layout support */
+@media (max-width: 1024px) {
+  .navbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.85rem 1.1rem;
+  }
+
+  .navbar nav {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.35rem;
+    gap: 0.5rem;
+  }
+
+  .navbar nav a {
+    white-space: nowrap;
+    padding: 0.45rem 0.7rem;
+  }
+
+  .profile-chip {
+    margin-left: auto;
+  }
+
+  main {
+    padding: 1.1rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .hero {
+    padding: 1.35rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-body,
+  .memories-body,
+  .blog-body,
+  .dates-body,
+  .special-body,
+  .favorites-body,
+  .profile-body,
+  .login-body,
+  .sunflower-body {
+    background-attachment: scroll;
+    background-size: cover;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 15px;
+  }
+
+  .navbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .navbar .logo {
+    width: 100%;
+  }
+
+  .profile-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .card-grid,
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .favorite-row,
+  .bucket-row {
+    align-items: flex-start;
+  }
+
+  form input,
+  form textarea,
+  form button,
+  form select {
+    width: 100%;
+  }
+
+  .bouquet {
+    margin: 1.25rem auto 0;
+  }
+}
+
+@media (max-width: 640px) {
+  main {
+    padding: 0.9rem;
+  }
+
+  .navbar nav {
+    gap: 0.35rem;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .profile-avatar.large {
+    width: 82px;
+    height: 82px;
+  }
+
+  .gallery,
+  .card-grid {
+    gap: 0.75rem;
+  }
+
+  .hero {
+    border-radius: 16px;
+  }
 }

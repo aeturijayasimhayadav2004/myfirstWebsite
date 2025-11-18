@@ -207,17 +207,21 @@ function serveStatic(req, res, filepath) {
     }
     const ext = path.extname(filepath).toLowerCase();
     const types = {
-      '.html': 'text/html',
-      '.css': 'text/css',
-      '.js': 'application/javascript',
+      '.html': 'text/html; charset=utf-8',
+      '.css': 'text/css; charset=utf-8',
+      '.js': 'application/javascript; charset=utf-8',
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
       '.jpeg': 'image/jpeg',
       '.gif': 'image/gif',
       '.svg': 'image/svg+xml',
-      '.ico': 'image/x-icon'
+      '.ico': 'image/x-icon',
+      '.webp': 'image/webp'
     };
-    res.writeHead(200, { 'Content-Type': types[ext] || 'application/octet-stream' });
+    res.writeHead(200, {
+      'Content-Type': types[ext] || 'application/octet-stream',
+      'Cache-Control': 'public, max-age=3600'
+    });
     res.end(data);
   });
 }
