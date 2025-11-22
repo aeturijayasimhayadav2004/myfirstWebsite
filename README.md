@@ -2,6 +2,13 @@
 
 Private couple's web app with a zero-dependency Node backend, file-based persistence, PBKDF2-protected login, and a dark purple multi-page UI.
 
+## Tech stack
+
+- **Runtime:** Node.js 18+ using built-in `http`, `fs`, and `crypto` modules (no runtime npm dependencies).
+- **Persistence:** Atomic JSON store at `DATA_DIR` (defaults to `./data/store.json`, or `/var/data/ourworld` automatically when running on Render). Point `DATA_DIR` to a persistent path such as `/var/data/ourworld` on Render to keep data across deploys and restarts.
+- **Auth:** PBKDF2 password verification salted with `SESSION_SECRET`, with HttpOnly cookies that become `Secure` in production.
+- **Frontend:** Static HTML/CSS/JS served from `/public`, with responsive layouts and authenticated fetch calls to the API.
+
 ## Setup
 
 No external npm packages are required, so installs succeed even in locked-down environments:
@@ -36,6 +43,6 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 
 ## Deploying on Render
 
-Use the included `render.yaml` so Render provisions a **Node** web service that runs `npm install` and starts the app with `node server.js`. A `.nvmrc` is checked in to pin Node **18** for consistent PBKDF2 behavior across deploys. Render health checks call `/api/health` (already configured in the manifest).
+Use the included `render.yaml` so Render provisions a **Node** web service that runs `npm install` and starts the app with `node server.js`. A `.nvmrc` is checked in to pin Node **18** for consistent PBKDF2 behavior across deploys. Render health checks call `/api/health` (already configured in the manifest). To keep entries across redeploys, mount a persistent disk at `/var/data/ourworld` (already set as `DATA_DIR` in the manifest) so the JSON store survives restarts.
 
 If you previously created the service as Python (because `requirements.txt` exists for compatibility), update the Render dashboard start command to `node server.js`—or keep it as `python server.py`, which delegates to the Node entrypoint. Set `OURWORLD_PASSWORD` and `SESSION_SECRET` in the dashboard. Once deployed, Render's public HTTPS URL is your shareable link.

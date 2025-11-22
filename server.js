@@ -8,7 +8,11 @@ const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const UPLOAD_DIR = path.join(ROOT, 'uploads');
-const DATA_DIR = path.join(ROOT, 'data');
+const DEFAULT_RENDER_DATA_DIR = '/var/data/ourworld';
+const DATA_DIR =
+  process.env.DATA_DIR ||
+  process.env.DATA_PATH ||
+  (process.env.RENDER ? DEFAULT_RENDER_DATA_DIR : path.join(ROOT, 'data'));
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
 const SESSION_COOKIE = 'ourworld.sid';
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
@@ -18,9 +22,7 @@ const PASSWORD_SALT = process.env.SESSION_SECRET || 'ourworld-salt';
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
+fs.mkdirSync(DATA_DIR, { recursive: true });
 
 function loadData() {
   if (!fs.existsSync(DATA_FILE)) {
@@ -73,8 +75,26 @@ function loadData() {
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(seeded, null, 2));
   }
-  const raw = fs.readFileSync(DATA_FILE, 'utf8');
-  const parsed = JSON.parse(raw);
+  let parsed;
+  try {
+    const raw = fs.readFileSync(DATA_FILE, 'utf8');
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    console.error('Resetting data store after parse error', err);
+    parsed = {
+      events: [],
+      memories: [],
+      blogPosts: [],
+      dateIdeas: [],
+      bucketItems: [],
+      specialDays: [],
+      favorites: [],
+      profile: { name: 'Us', bio: 'Together, always.', avatar: null },
+      fun: { wheel: [], quiz: [], polls: [] },
+      nextIds: { events: 1, memories: 1, blogPosts: 1, dateIdeas: 1, bucketItems: 1, specialDays: 1, favorites: 1 }
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(parsed, null, 2));
+  }
 
   // Normalize legacy records
   if (Array.isArray(parsed.fun?.wheel)) {
@@ -101,14 +121,32 @@ function loadData() {
   parsed.favorites = Array.isArray(parsed.favorites) ? parsed.favorites : [];
   parsed.profile = parsed.profile || { name: 'Us', bio: 'Together, always.', avatar: null };
   parsed.nextIds = parsed.nextIds || {};
+  parsed.nextIds.events = parsed.nextIds.events || 1;
+  parsed.nextIds.memories = parsed.nextIds.memories || 1;
+  parsed.nextIds.blogPosts = parsed.nextIds.blogPosts || 1;
+  parsed.nextIds.dateIdeas = parsed.nextIds.dateIdeas || 1;
+  parsed.nextIds.bucketItems = parsed.nextIds.bucketItems || 1;
+  parsed.nextIds.specialDays = parsed.nextIds.specialDays || 1;
   parsed.nextIds.favorites = parsed.nextIds.favorites || 1;
 
   return parsed;
 }
 
 function saveData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  const tempFile = `${DATA_FILE}.tmp`;
+  fs.writeFileSync(tempFile, JSON.stringify(data, null, 2));
+  fs.renameSync(tempFile, DATA_FILE);
+  try {
+    const fd = fs.openSync(DATA_FILE, 'r');
+    fs.fsyncSync(fd);
+    fs.closeSync(fd);
+  } catch (err) {
+    console.warn('Warning: could not fsync data file', err);
+  }
+  state = data;
 }
+
+let state = loadData();
 
 const sessions = new Map();
 
@@ -252,7 +290,7 @@ function requireAuth(session, res) {
 }
 
 async function handleApi(req, res, session, pathname) {
-  const data = loadData();
+  const data = state;
   if (pathname === '/api/health' && req.method === 'GET') {
     sendJson(res, 200, { status: 'ok', storage: fs.existsSync(DATA_FILE) });
     return;

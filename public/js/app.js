@@ -23,6 +23,46 @@ async function requireSession(page) {
   }
 }
 
+function setupNavToggle() {
+  const navbar = document.querySelector('.navbar');
+  if (!navbar) return;
+  const nav = navbar.querySelector('nav');
+  if (!nav) return;
+
+  const toggle = document.createElement('button');
+  toggle.className = 'nav-toggle';
+  toggle.type = 'button';
+  toggle.setAttribute('aria-expanded', 'false');
+  toggle.textContent = 'Menu';
+  navbar.insertBefore(toggle, nav);
+
+  const sync = () => {
+    if (window.innerWidth <= 700) {
+      if (!nav.classList.contains('mobile-open')) {
+        nav.classList.add('mobile-closed');
+      }
+      toggle.hidden = false;
+    } else {
+      nav.classList.remove('mobile-open', 'mobile-closed');
+      toggle.setAttribute('aria-expanded', 'true');
+      toggle.hidden = true;
+    }
+  };
+
+  toggle.addEventListener('click', () => {
+    const isOpen = nav.classList.toggle('mobile-open');
+    if (!isOpen) {
+      nav.classList.add('mobile-closed');
+    } else {
+      nav.classList.remove('mobile-closed');
+    }
+    toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+
+  window.addEventListener('resize', sync);
+  sync();
+}
+
 async function loadProfile(forPublic = false) {
   const avatarTargets = document.querySelectorAll('.profile-avatar');
   const nameTargets = document.querySelectorAll('[data-profile-name]');
@@ -550,6 +590,7 @@ function loadInterstellarQuote() {
 function init() {
   requireSession(window.location.pathname);
   loadProfile(window.location.pathname === '/login.html');
+  setupNavToggle();
   bindLogin();
   bindProfileLogout();
   bindEventForm();
