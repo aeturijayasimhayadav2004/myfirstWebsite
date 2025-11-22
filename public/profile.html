@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Our World · Profile</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body class="profile-body">
+    <header class="navbar">
+      <div class="logo">Our World</div>
+      <nav>
+        <a href="/index.html">Home</a>
+        <a href="/memories.html">Memories</a>
+        <a href="/blog.html">Blog</a>
+        <a href="/dates.html">Dates</a>
+        <a href="/special-days.html">Special Days</a>
+        <a href="/favorites.html">Weekly Picks</a>
+        <a href="/bablu.html">Mr. Bablu</a>
+      </nav>
+      <button class="profile-chip active" type="button">
+        <span class="profile-avatar" aria-hidden="true"></span>
+        <span class="profile-label" data-profile-name>Profile</span>
+      </button>
+    </header>
+    <main>
+      <section class="hero profile-hero profile-layout">
+        <div class="profile-card">
+          <div class="profile-avatar large" aria-hidden="true"></div>
+          <div>
+            <p class="tag">Private space</p>
+            <h1 data-profile-name>Us</h1>
+            <p class="muted" id="profileBio">Together, always.</p>
+            <div class="profile-meta">
+              <span>Secure &amp; private</span>
+              <span>Session: 1 week</span>
+              <span>Uploads stay local</span>
+            </div>
+            <div class="profile-badges">
+              <span class="info-chip">Encrypted auth</span>
+              <span class="info-chip">Private uploads</span>
+              <span class="info-chip">Couple-only</span>
+            </div>
+          </div>
+        </div>
+        <div class="profile-stack">
+          <div class="card">
+            <h3>Update profile</h3>
+            <form id="profileForm">
+              <label for="name">Display name</label>
+              <input id="name" name="name" required />
+              <label for="bio">About us</label>
+              <textarea id="bio" name="bio" rows="3" placeholder="Sweet description"></textarea>
+              <label for="avatar">Profile photo</label>
+              <input id="avatar" name="avatar" type="file" accept="image/*" />
+              <div class="profile-actions">
+                <button class="btn" type="submit">Save profile</button>
+              </div>
+            </form>
+          </div>
+          <div class="card">
+            <h3>Security &amp; session</h3>
+            <ul class="info-list">
+              <li><span class="info-dot" aria-hidden="true"></span><span>All pages stay private after login</span></li>
+              <li><span class="info-dot" aria-hidden="true"></span><span>One-week sessions with HTTPS cookies</span></li>
+              <li><span class="info-dot" aria-hidden="true"></span><span>Uploads remain on this device or host</span></li>
+            </ul>
+            <div class="logout-zone">
+              <button class="btn ghost" id="profileLogout" type="button">Logout</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="/js/app.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', async () => {
+        try {
+          const profile = await apiRequest('/api/profile');
+          document.getElementById('name').value = profile.name || 'Us';
+          document.getElementById('bio').value = profile.bio || '';
+          document.getElementById('profileBio').textContent = profile.bio || 'Together, always.';
+        } catch (err) {
+          // handled by global redirect
+        }
+      });
+    </script>
+  </body>
+</html>
