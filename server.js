@@ -9,10 +9,30 @@ const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const DEFAULT_RENDER_DATA_DIR = '/var/data/ourworld';
-const DATA_DIR =
-  process.env.DATA_DIR ||
-  process.env.DATA_PATH ||
-  (process.env.RENDER ? DEFAULT_RENDER_DATA_DIR : path.join(ROOT, 'data'));
+const FALLBACK_DATA_DIR = path.join(ROOT, 'data');
+
+function resolveDataDir() {
+  const candidates = [];
+  if (process.env.DATA_DIR) candidates.push(process.env.DATA_DIR);
+  if (process.env.DATA_PATH) candidates.push(process.env.DATA_PATH);
+  if (process.env.RENDER) candidates.push(DEFAULT_RENDER_DATA_DIR);
+  candidates.push(FALLBACK_DATA_DIR);
+
+  for (const dir of candidates) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.accessSync(dir, fs.constants.W_OK);
+      return dir;
+    } catch (err) {
+      console.warn(`Warning: could not use data dir ${dir}: ${err.code || err.message}`);
+    }
+  }
+
+  throw new Error('No writable data directory available');
+}
+
+const DATA_DIR = resolveDataDir();
+console.log(`[storage] using data directory: ${DATA_DIR}`);
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
 const SESSION_COOKIE = 'ourworld.sid';
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
