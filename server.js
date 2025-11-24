@@ -10,6 +10,8 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const DEFAULT_RENDER_DATA_DIR = '/var/data/ourworld';
 const FALLBACK_DATA_DIR = path.join(ROOT, 'data');
+const HOME_DATA_DIR = path.join(ROOT, '.data');
+const TMP_DATA_DIR = path.join('/tmp', 'ourworld');
 
 function resolveDataDir() {
   const candidates = [];
@@ -17,12 +19,18 @@ function resolveDataDir() {
   if (process.env.DATA_PATH) candidates.push(process.env.DATA_PATH);
   if (process.env.RENDER) candidates.push(DEFAULT_RENDER_DATA_DIR);
   candidates.push(FALLBACK_DATA_DIR);
+  candidates.push(HOME_DATA_DIR);
+  candidates.push(TMP_DATA_DIR);
 
   for (const dir of candidates) {
     try {
       fs.mkdirSync(dir, { recursive: true });
       fs.accessSync(dir, fs.constants.W_OK);
-      return dir;
+      const resolved = path.resolve(dir);
+      if (resolved === TMP_DATA_DIR) {
+        console.warn('Warning: using temporary storage; data may not survive restarts. Configure DATA_DIR for persistence.');
+      }
+      return resolved;
     } catch (err) {
       console.warn(`Warning: could not use data dir ${dir}: ${err.code || err.message}`);
     }
@@ -278,7 +286,7 @@ function serveStatic(req, res, filepath) {
     };
     res.writeHead(200, {
       'Content-Type': types[ext] || 'application/octet-stream',
-      'Cache-Control': 'public, max-age=3600'
+      'Cache-Control': 'public, max-age=86400'
     });
     res.end(data);
   });

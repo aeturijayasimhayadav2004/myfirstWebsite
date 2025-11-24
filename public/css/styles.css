@@ -421,7 +421,7 @@ form .btn {
 /* Sunflower page */
 .sunflower-body {
   background: linear-gradient(135deg, rgba(255, 230, 150, 0.45), rgba(255, 213, 79, 0.55)),
-    url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1200&q=45&cs=tinysrgb&fm=jpg') center/cover no-repeat;
+    url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=35&cs=tinysrgb&fm=jpg') center/cover no-repeat;
   color: #2a1905;
 }
 
@@ -519,12 +519,12 @@ form .btn {
 /* Page backdrops */
 .home-body {
   background: linear-gradient(120deg, rgba(255, 218, 170, 0.55), rgba(133, 86, 45, 0.35)),
-    url('https://images.unsplash.com/photo-1504595403659-9088ce801e29?auto=format&fit=crop&w=1200&q=45&cs=tinysrgb&fm=jpg') center/cover no-repeat;
+    url('https://images.unsplash.com/photo-1504595403659-9088ce801e29?auto=format&fit=crop&w=900&q=35&cs=tinysrgb&fm=jpg') center/cover no-repeat;
 }
 
 .memories-body {
   background: linear-gradient(120deg, rgba(34, 26, 54, 0.72), rgba(14, 9, 28, 0.9)),
-    url('https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=1200&q=45&cs=tinysrgb&fm=jpg') center/cover no-repeat;
+    url('https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=900&q=35&cs=tinysrgb&fm=jpg') center/cover no-repeat;
   background-blend-mode: screen, normal;
 }
 
@@ -534,29 +534,51 @@ form .btn {
 
 .dates-body {
   background: linear-gradient(140deg, rgba(255, 171, 193, 0.55), rgba(255, 219, 141, 0.45)),
-    url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=45&cs=tinysrgb&fm=jpg') center/cover no-repeat;
+    url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=35&cs=tinysrgb&fm=jpg') center/cover no-repeat;
 }
 
 .special-body {
   background: linear-gradient(130deg, rgba(146, 199, 255, 0.6), rgba(255, 255, 255, 0.4)),
-    url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=45&cs=tinysrgb&fm=jpg') center/cover no-repeat;
+    url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=900&q=35&cs=tinysrgb&fm=jpg') center/cover no-repeat;
 }
 
 .favorites-body {
   background: radial-gradient(circle at 30% 20%, rgba(80, 110, 255, 0.35), transparent 40%),
     linear-gradient(135deg, rgba(7, 10, 34, 0.9), rgba(13, 18, 46, 0.9)),
-    url('https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1200&q=45&cs=tinysrgb&fm=jpg') center/cover no-repeat;
+    url('https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=900&q=35&cs=tinysrgb&fm=jpg') center/cover no-repeat;
   background-blend-mode: screen, normal, normal;
 }
 
 .profile-body {
   background: linear-gradient(160deg, rgba(166, 193, 255, 0.45), rgba(92, 227, 230, 0.4)),
-    url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1200&q=45&cs=tinysrgb&fm=jpg') center/cover no-repeat;
+    url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=35&cs=tinysrgb&fm=jpg') center/cover no-repeat;
 }
 
 .login-body {
   background: radial-gradient(circle at 20% 20%, rgba(143, 108, 221, 0.35), transparent 35%),
     linear-gradient(160deg, #1f0f3a, #3a1c73, #5a2a8b);
+}
+
+@media (max-width: 768px), (prefers-reduced-data: reduce) {
+  .sunflower-body,
+  .home-body,
+  .memories-body,
+  .dates-body,
+  .special-body,
+  .favorites-body,
+  .profile-body {
+    background-image: none;
+    background: var(--bg);
+  }
+
+  .home-body,
+  .memories-body,
+  .dates-body,
+  .special-body,
+  .favorites-body,
+  .profile-body {
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(12, 10, 30, 0.9));
+  }
 }
 
 .login-body form {
