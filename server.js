@@ -13,9 +13,10 @@ const FALLBACK_DATA_DIR = path.join(ROOT, 'data');
 const HOME_DATA_DIR = path.join(ROOT, '.data');
 const TMP_DATA_DIR = path.join('/tmp', 'ourworld');
 const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
+const ALLOW_EPHEMERAL_STORAGE = process.env.ALLOW_EPHEMERAL_STORAGE === 'true';
 
 function resolveDataDir() {
-  const productionCandidates = [process.env.DATA_DIR, process.env.DATA_PATH, DEFAULT_RENDER_DATA_DIR, DEFAULT_RENDER_ROOT].filter(
+  const productionPersistent = [process.env.DATA_DIR, process.env.DATA_PATH, DEFAULT_RENDER_DATA_DIR, DEFAULT_RENDER_ROOT].filter(
     Boolean
   );
   const developmentCandidates = [
@@ -27,7 +28,7 @@ function resolveDataDir() {
     TMP_DATA_DIR
   ].filter(Boolean);
 
-  const candidates = IS_PROD ? productionCandidates : developmentCandidates;
+  const candidates = IS_PROD ? productionPersistent : developmentCandidates;
 
   for (const dir of candidates) {
     try {
@@ -45,6 +46,20 @@ function resolveDataDir() {
   }
 
   if (IS_PROD) {
+    if (ALLOW_EPHEMERAL_STORAGE) {
+      try {
+        fs.mkdirSync(FALLBACK_DATA_DIR, { recursive: true });
+        fs.accessSync(FALLBACK_DATA_DIR, fs.constants.W_OK);
+        const resolved = path.resolve(FALLBACK_DATA_DIR);
+        console.warn(
+          '[storage] WARNING: Falling back to ephemeral ./data directory in production because ALLOW_EPHEMERAL_STORAGE=true. Data WILL be lost on redeploy/restart.'
+        );
+        return resolved;
+      } catch (err) {
+        console.error(`Error: could not use fallback data dir ${FALLBACK_DATA_DIR}: ${err.code || err.message}`);
+      }
+    }
+
     console.error(
       '[storage] FATAL: No writable persistent data directory (DATA_DIR/DATA_PATH/default Render mount or /var/data root). Refusing to start in production.'
     );
@@ -54,7 +69,9 @@ function resolveDataDir() {
   throw new Error('No writable data directory available');
 }
 
-console.log(`[env] NODE_ENV=${process.env.NODE_ENV || 'undefined'}, RENDER=${process.env.RENDER || 'false'}, IS_PROD=${IS_PROD}`);
+console.log(
+  `[env] NODE_ENV=${process.env.NODE_ENV || 'undefined'}, RENDER=${process.env.RENDER || 'false'}, IS_PROD=${IS_PROD}, ALLOW_EPHEMERAL_STORAGE=${ALLOW_EPHEMERAL_STORAGE}`
+);
 const DATA_DIR = resolveDataDir();
 console.log(`[storage] using data directory: ${DATA_DIR}`);
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
