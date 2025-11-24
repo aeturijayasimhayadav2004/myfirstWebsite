@@ -5,7 +5,7 @@ Private couple's web app with a zero-dependency Node backend, file-based persist
 ## Tech stack
 
 - **Runtime:** Node.js 18+ using built-in `http`, `fs`, and `crypto` modules (no runtime npm dependencies).
-- **Persistence:** Atomic JSON store at the first writable directory in `DATA_DIR`, `DATA_PATH`, Render's `/var/data/ourworld` mount, or a project-local `./data`/`.data` directory. In production the server refuses to use `/tmp`, failing fast if no persistent path is writable—set `DATA_DIR` to your mounted disk. In development it may fall back to `/tmp/ourworld` as a last resort. On boot the server logs the chosen directory so you can confirm the persistent target is active.
+- **Persistence:** Atomic JSON store at a resolved data directory. In production/Render the server **only** accepts `DATA_DIR`, `DATA_PATH`, or the default Render mount (`/var/data/ourworld`) and will fail fast if none are writable—no `./data`, `.data`, or `/tmp` fallbacks are permitted. In development it can still fall back through `./data`, `.data`, and finally `/tmp/ourworld` (with a warning) to keep local runs flexible. On boot the server logs the chosen directory so you can confirm the persistent target is active.
 - **Auth:** PBKDF2 password verification salted with `SESSION_SECRET`, with HttpOnly cookies that become `Secure` in production.
 - **Frontend:** Static HTML/CSS/JS served from `/public`, with responsive layouts and authenticated fetch calls to the API.
 
@@ -34,7 +34,7 @@ The server defaults to port **3000**. Sessions are HTTP-only cookies that last o
 - **Health checks**: `/api/health` confirms storage availability.
 - **Protected content**: All app pages (except `/login.html`) require an active session; missing or expired sessions redirect to the login page, and every data API (events, memories, blog, dates, special days, favorites) enforces authentication.
 - **Home**: Add and view upcoming events via `/api/home/events` (auth required).
-- **Memories**: Authenticated photo uploads with captions stored in `/uploads` with metadata in the local data store.
+- **Memories**: Authenticated photo uploads with captions stored in the persistent data directory under `/uploads` with metadata in the local data store.
 - **Blog**: Create and read posts through `/api/blog` (auth required).
 - **Dates**: Manage date ideas and bucket-list items at `/api/dates`, `/api/dates/ideas`, and `/api/dates/bucket` (auth required).
 - **Special Days**: Store milestones and countdowns through `/api/special-days` with achieved items separated once the date passes (auth required).

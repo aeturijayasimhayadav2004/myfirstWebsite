@@ -7,7 +7,6 @@ const { URL } = require('url');
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
-const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const DEFAULT_RENDER_DATA_DIR = '/var/data/ourworld';
 const FALLBACK_DATA_DIR = path.join(ROOT, 'data');
 const HOME_DATA_DIR = path.join(ROOT, '.data');
@@ -15,40 +14,48 @@ const TMP_DATA_DIR = path.join('/tmp', 'ourworld');
 const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 function resolveDataDir() {
-  const candidates = [];
-  if (process.env.DATA_DIR) candidates.push(process.env.DATA_DIR);
-  if (process.env.DATA_PATH) candidates.push(process.env.DATA_PATH);
-  if (process.env.RENDER) candidates.push(DEFAULT_RENDER_DATA_DIR);
-  candidates.push(FALLBACK_DATA_DIR);
-  candidates.push(HOME_DATA_DIR);
-  if (!IS_PROD) {
-    candidates.push(TMP_DATA_DIR);
-  }
+  const productionCandidates = [process.env.DATA_DIR, process.env.DATA_PATH, DEFAULT_RENDER_DATA_DIR].filter(Boolean);
+  const developmentCandidates = [
+    process.env.DATA_DIR,
+    process.env.DATA_PATH,
+    process.env.RENDER ? DEFAULT_RENDER_DATA_DIR : null,
+    FALLBACK_DATA_DIR,
+    HOME_DATA_DIR,
+    TMP_DATA_DIR
+  ].filter(Boolean);
+
+  const candidates = IS_PROD ? productionCandidates : developmentCandidates;
 
   for (const dir of candidates) {
     try {
       fs.mkdirSync(dir, { recursive: true });
       fs.accessSync(dir, fs.constants.W_OK);
       const resolved = path.resolve(dir);
-      if (resolved === TMP_DATA_DIR) {
+      if (!IS_PROD && resolved === TMP_DATA_DIR) {
         console.warn('Warning: using temporary storage; data may not survive restarts. Configure DATA_DIR for persistence.');
       }
       return resolved;
     } catch (err) {
-      console.warn(`Warning: could not use data dir ${dir}: ${err.code || err.message}`);
+      const level = IS_PROD ? 'Error' : 'Warning';
+      console[IS_PROD ? 'error' : 'warn'](`${level}: could not use data dir ${dir}: ${err.code || err.message}`);
     }
   }
 
   if (IS_PROD) {
-    throw new Error('No persistent writable data directory available – refusing to use /tmp in production. Set DATA_DIR to a mounted disk.');
+    console.error(
+      '[storage] FATAL: No writable persistent data directory (DATA_DIR/DATA_PATH/default Render mount). Refusing to start in production.'
+    );
+    throw new Error('No persistent writable data directory available in production.');
   }
 
   throw new Error('No writable data directory available');
 }
 
+console.log(`[env] NODE_ENV=${process.env.NODE_ENV || 'undefined'}, RENDER=${process.env.RENDER || 'false'}, IS_PROD=${IS_PROD}`);
 const DATA_DIR = resolveDataDir();
 console.log(`[storage] using data directory: ${DATA_DIR}`);
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
+const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 const SESSION_COOKIE = 'ourworld.sid';
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const PASSWORD_SALT = process.env.SESSION_SECRET || 'ourworld-salt';
