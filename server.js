@@ -7,14 +7,17 @@ const { URL } = require('url');
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
-const DEFAULT_RENDER_DATA_DIR = '/var/data/ourworld';
+const DEFAULT_RENDER_ROOT = '/var/data';
+const DEFAULT_RENDER_DATA_DIR = path.join(DEFAULT_RENDER_ROOT, 'ourworld');
 const FALLBACK_DATA_DIR = path.join(ROOT, 'data');
 const HOME_DATA_DIR = path.join(ROOT, '.data');
 const TMP_DATA_DIR = path.join('/tmp', 'ourworld');
 const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 function resolveDataDir() {
-  const productionCandidates = [process.env.DATA_DIR, process.env.DATA_PATH, DEFAULT_RENDER_DATA_DIR].filter(Boolean);
+  const productionCandidates = [process.env.DATA_DIR, process.env.DATA_PATH, DEFAULT_RENDER_DATA_DIR, DEFAULT_RENDER_ROOT].filter(
+    Boolean
+  );
   const developmentCandidates = [
     process.env.DATA_DIR,
     process.env.DATA_PATH,
@@ -43,7 +46,7 @@ function resolveDataDir() {
 
   if (IS_PROD) {
     console.error(
-      '[storage] FATAL: No writable persistent data directory (DATA_DIR/DATA_PATH/default Render mount). Refusing to start in production.'
+      '[storage] FATAL: No writable persistent data directory (DATA_DIR/DATA_PATH/default Render mount or /var/data root). Refusing to start in production.'
     );
     throw new Error('No persistent writable data directory available in production.');
   }
