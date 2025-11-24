@@ -12,6 +12,7 @@ const DEFAULT_RENDER_DATA_DIR = '/var/data/ourworld';
 const FALLBACK_DATA_DIR = path.join(ROOT, 'data');
 const HOME_DATA_DIR = path.join(ROOT, '.data');
 const TMP_DATA_DIR = path.join('/tmp', 'ourworld');
+const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 function resolveDataDir() {
   const candidates = [];
@@ -20,7 +21,9 @@ function resolveDataDir() {
   if (process.env.RENDER) candidates.push(DEFAULT_RENDER_DATA_DIR);
   candidates.push(FALLBACK_DATA_DIR);
   candidates.push(HOME_DATA_DIR);
-  candidates.push(TMP_DATA_DIR);
+  if (!IS_PROD) {
+    candidates.push(TMP_DATA_DIR);
+  }
 
   for (const dir of candidates) {
     try {
@@ -36,6 +39,10 @@ function resolveDataDir() {
     }
   }
 
+  if (IS_PROD) {
+    throw new Error('No persistent writable data directory available – refusing to use /tmp in production. Set DATA_DIR to a mounted disk.');
+  }
+
   throw new Error('No writable data directory available');
 }
 
@@ -44,7 +51,6 @@ console.log(`[storage] using data directory: ${DATA_DIR}`);
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
 const SESSION_COOKIE = 'ourworld.sid';
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-const IS_PROD = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 const PASSWORD_SALT = process.env.SESSION_SECRET || 'ourworld-salt';
 
 if (!fs.existsSync(UPLOAD_DIR)) {
